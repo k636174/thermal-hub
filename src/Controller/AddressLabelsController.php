@@ -83,7 +83,7 @@ class AddressLabelsController extends AppController
         }
         $layout = new AddressLabelLayoutService();
         $svg = $layout->renderSvg($label->toArray(), 203, 72.0, 100.0);
-        $image = (new RasterImageService())->render($svg, 576, $layout->feedTopOffsetDots(203));
+        $image = (new RasterImageService())->render($svg, 576);
 
         return $this->getResponse()
             ->withType('png')
