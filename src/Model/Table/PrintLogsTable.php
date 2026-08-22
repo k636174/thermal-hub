@@ -17,5 +17,6 @@ class PrintLogsTable extends Table
         $this->belongsTo('Users');
         $this->belongsTo('Printers');
         $this->belongsTo('PrintJobs');
+        $this->belongsTo('AddressLabels');
     }
 }

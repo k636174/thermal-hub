@@ -100,6 +100,8 @@ class PrintJobsController extends AppController
             'user_id' => $uid,
             'printer_id' => $printer->get('id'),
             'print_job_id' => $job->get('id'),
+            'address_label_id' => null,
+            'document_type' => 'text',
             'status' => $status,
             'message' => $message,
             'printed_at' => DateTime::now(),

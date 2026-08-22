@@ -28,6 +28,12 @@ class EscPosPrinterService
         string $paperLength = self::PAPER_LENGTH_NONE,
     ): void {
         $payload = $this->buildPayload($body, $encoding, $paperLength);
+        $this->sendPayload($host, $port, $payload, $timeout);
+    }
+
+    /** Send a prepared ESC/POS payload. */
+    public function sendPayload(string $host, int $port, string $payload, int $timeout): void
+    {
         $errorMessage = '';
         set_error_handler(static function (int $severity, string $message) use (&$errorMessage): bool {
             $errorMessage = $message;

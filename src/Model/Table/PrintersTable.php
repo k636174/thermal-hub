@@ -25,7 +25,22 @@ class PrintersTable extends Table
     {
         return $v->notEmptyString('name')->maxLength('name', 100)->notEmptyString('host')->maxLength('host', 255)
             ->integer('port')->range('port', [1, 65535])->integer('timeout')->range('timeout', [1, 30])
-            ->inList('encoding', ['CP932', 'SHIFT_JIS', 'UTF-8']);
+            ->inList('encoding', ['CP932', 'SHIFT_JIS', 'UTF-8'])
+            ->integer('dpi')->inList('dpi', [203])
+            ->integer('printable_width_dots')->range('printable_width_dots', [128, 832])
+            ->decimal('label_width_mm')->range('label_width_mm', [20, 300])
+            ->decimal('label_length_mm')->range('label_length_mm', [20, 300])
+            ->boolean('raster_enabled')
+            ->add('label_width_mm', 'fitsPrintableWidth', [
+                'rule' => static function (mixed $value, array $context): bool {
+                    $data = $context['data'];
+                    $dpi = (int)($data['dpi'] ?? 203);
+                    $available = (int)($data['printable_width_dots'] ?? 576);
+
+                    return (int)round((float)$value * $dpi / 25.4) <= $available;
+                },
+                'message' => '用紙幅がプリンターの印字可能幅を超えています。',
+            ]);
     }
 
     /** Configure application rules. */

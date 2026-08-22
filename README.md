@@ -4,10 +4,11 @@
 
 ## 必要環境
 
-- 64bit版 PHP 8.2以上（`pdo_mysql`, `intl`, `mbstring`, `iconv`）
+- 64bit版 PHP 8.2以上（`pdo_mysql`, `intl`, `mbstring`, `iconv`、宛先ラベル機能では `imagick`）
 - Composer
 - MySQL / MariaDB
 - TCP/IP接続可能なESC/POS対応プリンター
+- 宛先ラベル機能を使う場合は、PHP Imagick拡張、ImageMagick、日本語フォント（Noto Sans CJK JP）
 
 ## セットアップ
 
@@ -27,7 +28,7 @@ bin/cake migrations migrate
 
 ```bash
 sudo apt update
-sudo apt install mariadb-server mariadb-client php-cli php-mysql php-intl php-mbstring php-xml php-curl php-zip unzip composer
+sudo apt install mariadb-server mariadb-client php-cli php-mysql php-intl php-mbstring php-xml php-curl php-zip php-imagick fonts-noto-cjk unzip composer
 sudo systemctl enable --now mariadb
 ```
 
@@ -35,7 +36,7 @@ PHP 8.2以上であることと、必要な拡張が読み込まれているこ�
 
 ```bash
 php -v
-php -m | grep -E 'PDO|pdo_mysql|intl|mbstring|iconv'
+php -m | grep -E 'PDO|pdo_mysql|intl|mbstring|iconv|imagick'
 ```
 
 ### 2. データベースと専用DBユーザーを作成する
@@ -160,6 +161,15 @@ bin/cake user reset-password user@example.com
 2. 「プリンター」でホスト、ポート（一般的には9100）、文字コード等を登録する。
 3. 「印字データ」でタイトルと本文を保存する。
 4. 印字データ一覧からプリンターを選んで印字する。
+
+## 宛先ラベル
+
+1. プリンター設定で画像印字を有効にし、実機の印字可能幅、用紙幅、ラベル長を登録する。
+2. 「宛先ラベル」から郵便番号、住所、宛名、敬称を登録する。
+3. プレビューで横書きレイアウトを確認する。
+4. 一覧でプリンターを選び、「90度回転して印字」を実行する。
+
+宛先ラベルはサーバー上で画像化され、時計回りに90度回転してESC/POSラスター画像として送信されます。日本語描画には `Noto Sans CJK JP` フォントを使用するため、Webサーバーの実行ユーザーからフォントを参照できるようにしてください。
 
 プリンター接続はサーバーから行われます。ホストの到達性、ファイアウォール、プリンターのRAW TCP印刷設定を確認してください。
 
