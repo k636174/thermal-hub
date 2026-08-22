@@ -106,7 +106,7 @@ class AddressLabelLayoutService
         return (int)round($millimeters * $dpi / 25.4);
     }
 
-    /** Return the visible physical paper width used by the local CT-S253. */
+    /** Return the configured visible physical paper width. */
     public function physicalPaperWidthDots(int $dpi): int
     {
         return $this->mmToDots(self::PHYSICAL_PAPER_WIDTH_MM, $dpi);
