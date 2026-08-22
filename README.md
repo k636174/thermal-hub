@@ -4,7 +4,7 @@
 
 ## 必要環境
 
-- 64bit版 PHP 8.2以上（`pdo_mysql`, `mbstring`, `iconv`）
+- 64bit版 PHP 8.2以上（`pdo_mysql`, `intl`, `mbstring`, `iconv`）
 - Composer
 - MySQL / MariaDB
 - TCP/IP接続可能なESC/POS対応プリンター
@@ -18,6 +18,125 @@ bin/cake migrations migrate
 ```
 
 `config/app_local.php` の `Datasources.default` と `Security.salt` を環境に合わせて設定してください。Webサーバーのドキュメントルートは `webroot/` です。
+
+## Linux + MariaDBでのセットアップ
+
+以下はDebian / Ubuntu系Linuxで、MariaDBとアプリケーションを同じサーバーに配置する例です。ほかのディストリビューションではパッケージ名とWebサーバーの設定方法を読み替えてください。
+
+### 1. 必要なパッケージをインストールする
+
+```bash
+sudo apt update
+sudo apt install mariadb-server mariadb-client php-cli php-mysql php-intl php-mbstring php-xml php-curl php-zip unzip composer
+sudo systemctl enable --now mariadb
+```
+
+PHP 8.2以上であることと、必要な拡張が読み込まれていることを確認します。
+
+```bash
+php -v
+php -m | grep -E 'PDO|pdo_mysql|intl|mbstring|iconv'
+```
+
+### 2. データベースと専用DBユーザーを作成する
+
+MariaDBの管理者として接続します。
+
+```bash
+sudo mariadb
+```
+
+MariaDB上で次のSQLを実行します。`十分に長いランダムなパスワード`は実際のパスワードに置き換えてください。このユーザーはローカル接続専用で、`thermal_hub`データベースだけを操作できます。
+
+```sql
+CREATE DATABASE thermal_hub
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+CREATE USER 'thermal_hub'@'localhost'
+  IDENTIFIED BY '十分に長いランダムなパスワード';
+
+GRANT ALL PRIVILEGES ON thermal_hub.*
+  TO 'thermal_hub'@'localhost';
+
+EXIT;
+```
+
+DBを別サーバーに置く場合は、`localhost`の代わりにアプリケーションサーバーのIPアドレスまたは限定したネットワークを指定します。`'thermal_hub'@'%'`のような無制限の接続元は避け、MariaDBの待受アドレスとファイアウォールも必要な接続元だけに制限してください。
+
+作成したDBユーザーで接続できることを確認します。パスワードをコマンドラインに直接書かないため、`-p`の後は空けたまま実行します。
+
+```bash
+mariadb -u thermal_hub -p thermal_hub
+```
+
+接続できたら`EXIT;`で終了します。
+
+### 3. アプリケーションを設定する
+
+プロジェクトのルートで依存パッケージとローカル設定ファイルを用意します。
+
+```bash
+composer install --no-dev --optimize-autoloader
+cp config/app_local.example.php config/app_local.php
+```
+
+`config/app_local.php`の該当箇所を次のように変更します。DBパスワードと生成したsaltはリポジトリへコミットしないでください。
+
+```php
+'debug' => false,
+
+'Security' => [
+    'salt' => 'ここにランダムな文字列を設定',
+],
+
+'Datasources' => [
+    'default' => [
+        'host' => 'localhost',
+        'username' => 'thermal_hub',
+        'password' => 'DB作成時に設定したパスワード',
+        'database' => 'thermal_hub',
+        'url' => null,
+    ],
+],
+```
+
+saltは、例えば次のコマンドで生成できます。
+
+```bash
+php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'
+```
+
+Webサーバーを実行するユーザーが一時ファイルとログを書き込めるようにします。Debian / UbuntuのApacheでは通常`www-data`です。
+
+```bash
+sudo chown -R www-data:www-data tmp logs
+sudo chmod -R u+rwX,g+rwX tmp logs
+sudo chgrp www-data config/app_local.php
+sudo chmod 640 config/app_local.php
+```
+
+`www-data`以外のユーザーでWebサーバーを実行する場合は、上記のユーザー名とグループ名をその実行ユーザーに読み替えてください。
+
+### 4. テーブルとアプリ内アカウントを作成する
+
+マイグレーションは、設定した`thermal_hub`ユーザーで実行されます。
+
+```bash
+bin/cake migrations migrate
+bin/cake user create user@example.com "表示名"
+```
+
+ここで作成するアプリ内アカウントは、手順2のMariaDBユーザーとは別物です。コマンドのプロンプトで8文字以上のログインパスワードを設定します。
+
+マイグレーションの状態とDB内のテーブルを確認します。
+
+```bash
+bin/cake migrations status
+mariadb -u thermal_hub -p thermal_hub -e 'SHOW TABLES;'
+```
+
+`users`、`printers`、`print_jobs`、`print_logs`、`phinxlog`が表示されればDBの初期化は完了です。Webサーバーのドキュメントルートをこのプロジェクトの`webroot/`に設定し、`/users/login`からログインしてください。
 
 ## アカウント作成
 
