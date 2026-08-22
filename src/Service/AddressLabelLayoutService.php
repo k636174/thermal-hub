@@ -12,6 +12,7 @@ class AddressLabelLayoutService
     private const POSTAL_TOP_OFFSET_MM = 8.0;
     private const ADDRESS_START_RATIO = 0.27;
     private const RECIPIENT_START_RATIO = 0.60;
+    private const RECIPIENT_UP_OFFSET_MM = 3.0;
     private const MIN_ADDRESS_PT = 12;
     private const MIN_RECIPIENT_PT = 18;
 
@@ -73,7 +74,8 @@ class AddressLabelLayoutService
             $y = $addressY + (($index + 1) * (int)round($addressSize * 1.25));
             $elements[] = $this->textElement($margin, $y, $line, $addressSize, 'start');
         }
-        $recipientStartY = (int)floor($height * self::RECIPIENT_START_RATIO) + $contentTopOffset;
+        $recipientStartY = (int)floor($height * self::RECIPIENT_START_RATIO) + $contentTopOffset
+            - $this->mmToDots(self::RECIPIENT_UP_OFFSET_MM, $dpi);
         foreach ($recipientLines as $index => $line) {
             $y = $recipientStartY + (($index + 1) * (int)round($recipientSize * 1.25));
             $elements[] = $this->textElement(
