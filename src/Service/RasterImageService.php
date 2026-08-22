@@ -11,7 +11,7 @@ class RasterImageService
     private const MAX_PAYLOAD_BYTES = 2_000_000;
 
     /** @return array{png: string, escpos: string, width: int, height: int} */
-    public function render(string $svg, int $printableWidthDots): array
+    public function render(string $svg, int $printableWidthDots, int $feedTopOffsetDots = 0): array
     {
         if (!class_exists('Imagick')) {
             throw new RuntimeException('画像印字にはPHP Imagick拡張が必要です。');
@@ -24,6 +24,18 @@ class RasterImageService
         $image->setImageFormat('png');
         $image->setImageBackgroundColor('white');
         $image->rotateImage('white', 90);
+        $width = $image->getImageWidth();
+        $height = $image->getImageHeight();
+        if ($feedTopOffsetDots < 0 || $feedTopOffsetDots >= $height) {
+            throw new RuntimeException('紙送り方向の余白指定が不正です。');
+        }
+        if ($feedTopOffsetDots > 0) {
+            $shifted = new Imagick();
+            $shifted->newImage($width, $height, 'white', 'png');
+            $shifted->compositeImage($image, Imagick::COMPOSITE_OVER, 0, $feedTopOffsetDots);
+            $image->clear();
+            $image = $shifted;
+        }
         $image->setImageType(Imagick::IMGTYPE_GRAYSCALE);
         $image->thresholdImage(0.65 * Imagick::getQuantum());
         $width = $image->getImageWidth();

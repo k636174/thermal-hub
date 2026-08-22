@@ -12,6 +12,7 @@ class AddressLabelLayoutServiceTest extends TestCase
     public function testMmToDotsAt203Dpi(): void
     {
         $this->assertSame(575, (new AddressLabelLayoutService())->mmToDots(72.0, 203));
+        $this->assertSame(64, (new AddressLabelLayoutService())->feedTopOffsetDots(203));
     }
 
     public function testRenderSvgUsesHorizontalCanvasAndEscapesInput(): void

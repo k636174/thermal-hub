@@ -9,6 +9,7 @@ class AddressLabelLayoutService
 {
     private const MARGIN_MM = 3.0;
     private const POSTAL_TOP_OFFSET_MM = 8.0;
+    private const PRINT_FEED_TOP_OFFSET_MM = 8.0;
     private const ADDRESS_START_RATIO = 0.27;
     private const RECIPIENT_START_RATIO = 0.60;
     private const MIN_ADDRESS_PT = 12;
@@ -98,6 +99,12 @@ class AddressLabelLayoutService
     public function mmToDots(float $millimeters, int $dpi): int
     {
         return (int)round($millimeters * $dpi / 25.4);
+    }
+
+    /** Return the blank leading feed reserved on the rotated label. */
+    public function feedTopOffsetDots(int $dpi): int
+    {
+        return $this->mmToDots(self::PRINT_FEED_TOP_OFFSET_MM, $dpi);
     }
 
     /** Validate supported dimensions. */
