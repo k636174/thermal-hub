@@ -51,6 +51,23 @@ class RasterImageService
         return compact('png', 'escpos', 'width', 'height');
     }
 
+    /** Rotate the exact print bitmap back to the label's viewing orientation. */
+    public function orientForPreview(string $rotatedPng): string
+    {
+        if (!class_exists('Imagick')) {
+            throw new RuntimeException('画像プレビューにはPHP Imagick拡張が必要です。');
+        }
+        $image = new Imagick();
+        $image->setBackgroundColor('white');
+        $image->readImageBlob($rotatedPng);
+        $image->rotateImage('white', -90);
+        $image->setImageFormat('png');
+        $preview = $image->getImagesBlob();
+        $image->clear();
+
+        return $preview;
+    }
+
     /** @param list<list<bool>> $pixels */
     public function bitmapToEscPos(array $pixels): string
     {

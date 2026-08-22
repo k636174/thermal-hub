@@ -83,12 +83,14 @@ class AddressLabelsController extends AppController
         }
         $layout = new AddressLabelLayoutService();
         $svg = $layout->renderSvg($label->toArray(), 203, 72.0, 100.0);
-        $image = (new RasterImageService())->render($svg, 576);
+        $raster = new RasterImageService();
+        $image = $raster->render($svg, 576);
+        $preview = $raster->orientForPreview($image['png']);
 
         return $this->getResponse()
             ->withType('png')
             ->withHeader('Cache-Control', 'no-store')
-            ->withStringBody($image['png']);
+            ->withStringBody($preview);
     }
 
     /** Print a saved label immediately. */
