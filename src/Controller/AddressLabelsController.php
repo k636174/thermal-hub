@@ -81,13 +81,16 @@ class AddressLabelsController extends AppController
         if ($label->hasErrors()) {
             throw new BadRequestException('入力内容を確認してください。');
         }
-        $svg = (new AddressLabelLayoutService())->renderSvg($label->toArray(), 203, 72.0, 100.0);
-        $image = (new RasterImageService())->render($svg, 576);
+        $layout = new AddressLabelLayoutService();
+        $svg = $layout->renderSvg($label->toArray(), 203, 72.0, 100.0);
+        $raster = new RasterImageService();
+        $image = $raster->render($svg, 576);
+        $preview = $raster->orientForPreview($image['png'], $layout->physicalPaperWidthDots(203));
 
         return $this->getResponse()
             ->withType('png')
             ->withHeader('Cache-Control', 'no-store')
-            ->withStringBody($image['png']);
+            ->withStringBody($preview);
     }
 
     /** Print a saved label immediately. */

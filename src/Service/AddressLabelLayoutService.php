@@ -8,6 +8,12 @@ use InvalidArgumentException;
 class AddressLabelLayoutService
 {
     private const MARGIN_MM = 3.0;
+    private const PHYSICAL_PAPER_WIDTH_MM = 58.0;
+    private const CONTENT_TOP_OFFSET_MM = 11.0;
+    private const POSTAL_TOP_OFFSET_MM = 8.0;
+    private const ADDRESS_START_RATIO = 0.27;
+    private const RECIPIENT_START_RATIO = 0.60;
+    private const RECIPIENT_UP_OFFSET_MM = 3.0;
     private const MIN_ADDRESS_PT = 12;
     private const MIN_RECIPIENT_PT = 18;
 
@@ -37,6 +43,7 @@ class AddressLabelLayoutService
             $recipient .= ' ' . $honorific;
         }
         $postalSize = $this->pointsToDots(16, $dpi);
+        $contentTopOffset = $this->mmToDots(self::CONTENT_TOP_OFFSET_MM, $dpi);
         $addressAreaHeight = (int)floor($height * 0.42);
         [$addressLines, $addressSize] = $this->fitText(
             implode(' ', $address),
@@ -59,14 +66,17 @@ class AddressLabelLayoutService
 
         $elements = [];
         if ($postal !== '') {
-            $elements[] = $this->textElement($margin, $margin + $postalSize, $postal, $postalSize, 'start');
+            $postalY = $margin + $contentTopOffset
+                + $this->mmToDots(self::POSTAL_TOP_OFFSET_MM, $dpi) + $postalSize;
+            $elements[] = $this->textElement($margin, $postalY, $postal, $postalSize, 'start');
         }
-        $addressY = (int)floor($height * 0.22);
+        $addressY = (int)floor($height * self::ADDRESS_START_RATIO) + $contentTopOffset;
         foreach ($addressLines as $index => $line) {
             $y = $addressY + (($index + 1) * (int)round($addressSize * 1.25));
             $elements[] = $this->textElement($margin, $y, $line, $addressSize, 'start');
         }
-        $recipientStartY = (int)floor($height * 0.66);
+        $recipientStartY = (int)floor($height * self::RECIPIENT_START_RATIO) + $contentTopOffset
+            - $this->mmToDots(self::RECIPIENT_UP_OFFSET_MM, $dpi);
         foreach ($recipientLines as $index => $line) {
             $y = $recipientStartY + (($index + 1) * (int)round($recipientSize * 1.25));
             $elements[] = $this->textElement(
@@ -94,6 +104,12 @@ class AddressLabelLayoutService
     public function mmToDots(float $millimeters, int $dpi): int
     {
         return (int)round($millimeters * $dpi / 25.4);
+    }
+
+    /** Return the configured visible physical paper width. */
+    public function physicalPaperWidthDots(int $dpi): int
+    {
+        return $this->mmToDots(self::PHYSICAL_PAPER_WIDTH_MM, $dpi);
     }
 
     /** Validate supported dimensions. */
