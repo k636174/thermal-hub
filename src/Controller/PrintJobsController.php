@@ -73,6 +73,7 @@ class PrintJobsController extends AppController
         $uid = $this->currentUserId();
         $job = $this->ownedJob($id);
         $printerId = (int)$this->getRequest()->getData('printer_id');
+        $paperLength = (string)$this->getRequest()->getData('paper_length', EscPosPrinterService::PAPER_LENGTH_NONE);
         $printer = $this->fetchTable('Printers')->find()->where(['id' => $printerId, 'user_id' => $uid])->first();
         if (!$printer) {
             throw new NotFoundException();
@@ -86,6 +87,7 @@ class PrintJobsController extends AppController
                 (string)$job->get('body'),
                 (string)$printer->get('encoding'),
                 (int)$printer->get('timeout'),
+                $paperLength,
             );
             $this->Flash->success($message);
         } catch (Throwable $e) {

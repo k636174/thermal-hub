@@ -3,14 +3,28 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use InvalidArgumentException;
 use RuntimeException;
 
 class EscPosPrinterService
 {
+    public const PAPER_LENGTH_NONE = 'none';
+    public const PAPER_LENGTH_NARROW = 'narrow';
+    public const PAPER_LENGTH_M5 = 'm5';
+
+    private const DOTS_PER_INCH = 203;
+    private const DOTS_PER_LINE = 30;
+
     /** Send text to a network ESC/POS printer. */
-    public function print(string $host, int $port, string $body, string $encoding, int $timeout): void
-    {
-        $payload = $this->buildPayload($body, $encoding);
+    public function print(
+        string $host,
+        int $port,
+        string $body,
+        string $encoding,
+        int $timeout,
+        string $paperLength = self::PAPER_LENGTH_NONE,
+    ): void {
+        $payload = $this->buildPayload($body, $encoding, $paperLength);
         $errorMessage = '';
         set_error_handler(static function (int $severity, string $message) use (&$errorMessage): bool {
             $errorMessage = $message;
@@ -40,13 +54,50 @@ class EscPosPrinterService
     }
 
     /** Build the ESC/POS byte payload. */
-    public function buildPayload(string $body, string $encoding): string
-    {
-        $converted = iconv('UTF-8', $encoding . '//TRANSLIT', str_replace(["\r\n", "\r"], "\n", $body));
+    public function buildPayload(
+        string $body,
+        string $encoding,
+        string $paperLength = self::PAPER_LENGTH_NONE,
+    ): string {
+        $lengths = [
+            self::PAPER_LENGTH_NONE => null,
+            self::PAPER_LENGTH_NARROW => 170,
+            self::PAPER_LENGTH_M5 => 105,
+        ];
+        if (!array_key_exists($paperLength, $lengths)) {
+            throw new InvalidArgumentException('用紙長の指定が不正です。');
+        }
+
+        $normalized = str_replace(["\r\n", "\r"], "\n", $body);
+        $converted = iconv('UTF-8', $encoding . '//TRANSLIT', $normalized);
         if ($converted === false) {
             throw new RuntimeException('本文をプリンター文字コードへ変換できません。');
         }
 
-        return "\x1b\x40" . $converted . "\n\x1b\x64\x03\x1d\x56\x00";
+        $feed = "\x1b\x64\x03";
+        $millimeters = $lengths[$paperLength];
+        if ($millimeters !== null) {
+            $lineCount = substr_count($normalized, "\n") + 1;
+            $targetDots = (int)round($millimeters * self::DOTS_PER_INCH / 25.4);
+            $remainingDots = $targetDots - ($lineCount * self::DOTS_PER_LINE);
+            if ($remainingDots > 0) {
+                $feed = $this->feedDots($remainingDots);
+            }
+        }
+
+        return "\x1b\x40" . $converted . "\n" . $feed . "\x1d\x56\x00";
+    }
+
+    /** Build one or more ESC J commands (maximum 255 dots per command). */
+    private function feedDots(int $dots): string
+    {
+        $commands = '';
+        while ($dots > 0) {
+            $chunk = min($dots, 255);
+            $commands .= "\x1b\x4a" . chr($chunk);
+            $dots -= $chunk;
+        }
+
+        return $commands;
     }
 }
