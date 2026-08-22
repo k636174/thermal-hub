@@ -1,4 +1,58 @@
-# CakePHP Application Skeleton
+# Thermal Hub
+
+ネットワーク経由でESC/POS対応サーマルプリンターへ印字するCakePHPアプリケーションです。アカウントごとに複数のプリンターと印字原稿を保存し、編集して任意のタイミングで送信できます。
+
+## 必要環境
+
+- 64bit版 PHP 8.2以上（`pdo_mysql`, `mbstring`, `iconv`）
+- Composer
+- MySQL / MariaDB
+- TCP/IP接続可能なESC/POS対応プリンター
+
+## セットアップ
+
+```bash
+composer install
+cp config/app_local.example.php config/app_local.php
+bin/cake migrations migrate
+```
+
+`config/app_local.php` の `Datasources.default` と `Security.salt` を環境に合わせて設定してください。Webサーバーのドキュメントルートは `webroot/` です。
+
+## アカウント作成
+
+Web画面からのアカウント登録は行いません。CLIで作成します。
+
+```bash
+bin/cake user create user@example.com "表示名"
+```
+
+表示されるプロンプトで8文字以上のパスワードを入力します。その後 `/users/login` からログインしてください。
+
+パスワードをリセットする場合は、対象ユーザーのメールアドレスを指定します。
+
+```bash
+bin/cake user reset-password user@example.com
+```
+
+## 基本操作
+
+1. ログインする。
+2. 「プリンター」でホスト、ポート（一般的には9100）、文字コード等を登録する。
+3. 「印字データ」でタイトルと本文を保存する。
+4. 印字データ一覧からプリンターを選んで印字する。
+
+プリンター接続はサーバーから行われます。ホストの到達性、ファイアウォール、プリンターのRAW TCP印刷設定を確認してください。
+
+## 開発
+
+仕様は [`docs/specification.md`](docs/specification.md)、エージェント向け規約は [`AGENT.md`](AGENT.md) を参照してください。変更時は仕様を先に更新します。
+
+```bash
+composer check
+```
+
+<!-- The original CakePHP skeleton documentation follows. -->
 
 ![Build Status](https://github.com/cakephp/app/actions/workflows/ci.yml/badge.svg?branch=5.x)
 [![Total Downloads](https://img.shields.io/packagist/dt/cakephp/app.svg?style=flat-square)](https://packagist.org/packages/cakephp/app)
