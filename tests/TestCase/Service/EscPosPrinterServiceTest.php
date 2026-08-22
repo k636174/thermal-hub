@@ -15,6 +15,25 @@ class EscPosPrinterServiceTest extends TestCase
         $this->assertSame("\x1b\x40hello\nworld\n\x1b\x64\x03\x1d\x56\x00", $payload);
     }
 
+    public function testBuildPayloadEnablesShiftJisKanjiModeForCp932(): void
+    {
+        $payload = (new EscPosPrinterService())->buildPayload('日本語', 'CP932');
+
+        $this->assertSame(
+            "\x1b\x40\x1c\x43\x01\x1c\x26" . iconv('UTF-8', 'CP932', '日本語')
+                . "\x1c\x2e\n\x1b\x64\x03\x1d\x56\x00",
+            $payload,
+        );
+    }
+
+    public function testBuildPayloadEnablesShiftJisKanjiModeForShiftJis(): void
+    {
+        $payload = (new EscPosPrinterService())->buildPayload('日本語', 'SHIFT_JIS');
+
+        $this->assertStringStartsWith("\x1b\x40\x1c\x43\x01\x1c\x26", $payload);
+        $this->assertStringContainsString("\x1c\x2e\n", $payload);
+    }
+
     public function testBuildPayloadFeedsToM5Length(): void
     {
         $payload = (new EscPosPrinterService())->buildPayload('hello', 'UTF-8', 'm5');

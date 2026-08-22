@@ -74,6 +74,14 @@ class EscPosPrinterService
             throw new RuntimeException('本文をプリンター文字コードへ変換できません。');
         }
 
+        $textPrefix = '';
+        $textSuffix = '';
+        if (in_array(strtoupper($encoding), ['CP932', 'SHIFT_JIS'], true)) {
+            // FS C 1 selects Shift_JIS, and FS & enables two-byte Kanji mode.
+            $textPrefix = "\x1c\x43\x01\x1c\x26";
+            $textSuffix = "\x1c\x2e";
+        }
+
         $feed = "\x1b\x64\x03";
         $millimeters = $lengths[$paperLength];
         if ($millimeters !== null) {
@@ -85,7 +93,7 @@ class EscPosPrinterService
             }
         }
 
-        return "\x1b\x40" . $converted . "\n" . $feed . "\x1d\x56\x00";
+        return "\x1b\x40" . $textPrefix . $converted . $textSuffix . "\n" . $feed . "\x1d\x56\x00";
     }
 
     /** Build one or more ESC J commands (maximum 255 dots per command). */
