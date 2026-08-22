@@ -10,6 +10,7 @@ use Throwable;
 
 class PrintJobsController extends AppController
 {
+    /** @return void */
     public function index()
     {
         $uid = $this->currentUserId();
@@ -18,21 +19,26 @@ class PrintJobsController extends AppController
         $this->set(compact('jobs', 'printers'));
     }
 
+    /** @return \Cake\Http\Response|null */
     public function add()
     {
         $table = $this->fetchTable('PrintJobs');
         $printJob = $table->newEmptyEntity();
         if ($this->getRequest()->is('post')) {
             $printJob = $table->patchEntity($printJob, $this->getRequest()->getData());
-            $printJob->user_id = $this->currentUserId();
+            $printJob->set('user_id', $this->currentUserId());
             if ($table->save($printJob)) {
                 $this->Flash->success('印字データを保存しました。');
 
                 return $this->redirect(['action' => 'index']);
             }
-        } $this->set(compact('printJob'));
+        }
+        $this->set(compact('printJob'));
+
+        return null;
     }
 
+    /** @return \Cake\Http\Response|null */
     public function edit(int $id)
     {
         $table = $this->fetchTable('PrintJobs');
@@ -44,9 +50,13 @@ class PrintJobsController extends AppController
 
                 return $this->redirect(['action' => 'index']);
             }
-        } $this->set(compact('printJob'));
+        }
+        $this->set(compact('printJob'));
+
+        return null;
     }
 
+    /** @return \Cake\Http\Response|null */
     public function delete(int $id)
     {
         $this->getRequest()->allowMethod(['post','delete']);
@@ -56,6 +66,7 @@ class PrintJobsController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    /** @return \Cake\Http\Response|null */
     public function printNow(int $id)
     {
         $this->getRequest()->allowMethod(['post']);
@@ -69,7 +80,13 @@ class PrintJobsController extends AppController
         $status = 'success';
         $message = '送信しました。';
         try {
-            (new EscPosPrinterService())->print($printer->host, $printer->port, $job->body, $printer->encoding, $printer->timeout);
+            (new EscPosPrinterService())->print(
+                (string)$printer->get('host'),
+                (int)$printer->get('port'),
+                (string)$job->get('body'),
+                (string)$printer->get('encoding'),
+                (int)$printer->get('timeout'),
+            );
             $this->Flash->success($message);
         } catch (Throwable $e) {
             $status = 'failed';
@@ -77,15 +94,24 @@ class PrintJobsController extends AppController
             $this->Flash->error($message);
         }
         $logs = $this->fetchTable('PrintLogs');
-        $log = $logs->newEntity(['user_id' => $uid, 'printer_id' => $printer->id, 'print_job_id' => $job->id, 'status' => $status, 'message' => $message, 'printed_at' => DateTime::now()]);
+        $log = $logs->newEntity([
+            'user_id' => $uid,
+            'printer_id' => $printer->get('id'),
+            'print_job_id' => $job->get('id'),
+            'status' => $status,
+            'message' => $message,
+            'printed_at' => DateTime::now(),
+        ]);
         $logs->saveOrFail($log);
 
         return $this->redirect(['action' => 'index']);
     }
 
+    /** @return \Cake\Datasource\EntityInterface */
     private function ownedJob(int $id)
     {
-        $job = $this->fetchTable('PrintJobs')->find()->where(['id' => $id, 'user_id' => $this->currentUserId()])->first();
+        $job = $this->fetchTable('PrintJobs')->find()
+            ->where(['id' => $id, 'user_id' => $this->currentUserId()])->first();
         if (!$job) {
             throw new NotFoundException();
         }

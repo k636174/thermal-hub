@@ -9,6 +9,7 @@ use Cake\Validation\Validator;
 
 class PrintersTable extends Table
 {
+    /** Configure table metadata and associations. */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -19,6 +20,7 @@ class PrintersTable extends Table
         $this->hasMany('PrintLogs');
     }
 
+    /** Configure validation. */
     public function validationDefault(Validator $v): Validator
     {
         return $v->notEmptyString('name')->maxLength('name', 100)->notEmptyString('host')->maxLength('host', 255)
@@ -26,6 +28,7 @@ class PrintersTable extends Table
             ->inList('encoding', ['CP932', 'SHIFT_JIS', 'UTF-8']);
     }
 
+    /** Configure application rules. */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         return $rules->add($rules->existsIn(['user_id'], 'Users'));

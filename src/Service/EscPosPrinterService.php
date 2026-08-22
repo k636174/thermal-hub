@@ -7,10 +7,21 @@ use RuntimeException;
 
 class EscPosPrinterService
 {
+    /** Send text to a network ESC/POS printer. */
     public function print(string $host, int $port, string $body, string $encoding, int $timeout): void
     {
         $payload = $this->buildPayload($body, $encoding);
-        $socket = @stream_socket_client("tcp://{$host}:{$port}", $errorCode, $errorMessage, $timeout);
+        $errorMessage = '';
+        set_error_handler(static function (int $severity, string $message) use (&$errorMessage): bool {
+            $errorMessage = $message;
+
+            return true;
+        });
+        try {
+            $socket = stream_socket_client("tcp://{$host}:{$port}", $errorCode, $errorMessage, $timeout);
+        } finally {
+            restore_error_handler();
+        }
         if ($socket === false) {
             throw new RuntimeException("プリンターに接続できません ({$errorCode}): {$errorMessage}");
         }
@@ -28,6 +39,7 @@ class EscPosPrinterService
         fclose($socket);
     }
 
+    /** Build the ESC/POS byte payload. */
     public function buildPayload(string $body, string $encoding): string
     {
         $converted = iconv('UTF-8', $encoding . '//TRANSLIT', str_replace(["\r\n", "\r"], "\n", $body));

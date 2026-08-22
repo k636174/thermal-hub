@@ -7,5 +7,11 @@ use Cake\ORM\Entity;
 
 class Printer extends Entity
 {
-    protected array $_accessible = ['name' => true, 'host' => true, 'port' => true, 'encoding' => true, 'timeout' => true];
+    protected array $_accessible = [
+        'name' => true,
+        'host' => true,
+        'port' => true,
+        'encoding' => true,
+        'timeout' => true,
+    ];
 }

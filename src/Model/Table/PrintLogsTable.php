@@ -7,6 +7,7 @@ use Cake\ORM\Table;
 
 class PrintLogsTable extends Table
 {
+    /** Configure table metadata and associations. */
     public function initialize(array $config): void
     {
         parent::initialize($config);

@@ -9,6 +9,7 @@ use Cake\Validation\Validator;
 
 class PrintJobsTable extends Table
 {
+    /** Configure table metadata and associations. */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -19,11 +20,13 @@ class PrintJobsTable extends Table
         $this->hasMany('PrintLogs');
     }
 
+    /** Configure validation. */
     public function validationDefault(Validator $v): Validator
     {
         return $v->notEmptyString('title')->maxLength('title', 200)->notEmptyString('body')->maxLength('body', 100000);
     }
 
+    /** Configure application rules. */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         return $rules->add($rules->existsIn(['user_id'], 'Users'));

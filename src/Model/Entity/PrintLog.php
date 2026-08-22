@@ -7,5 +7,12 @@ use Cake\ORM\Entity;
 
 class PrintLog extends Entity
 {
-    protected array $_accessible = ['user_id' => true, 'printer_id' => true, 'print_job_id' => true, 'status' => true, 'message' => true, 'printed_at' => true];
+    protected array $_accessible = [
+        'user_id' => true,
+        'printer_id' => true,
+        'print_job_id' => true,
+        'status' => true,
+        'message' => true,
+        'printed_at' => true,
+    ];
 }

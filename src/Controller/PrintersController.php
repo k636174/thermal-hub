@@ -7,19 +7,21 @@ use Cake\Http\Exception\NotFoundException;
 
 class PrintersController extends AppController
 {
+    /** @return void */
     public function index()
     {
         $printers = $this->fetchTable('Printers')->find()->where(['user_id' => $this->currentUserId()])->all();
         $this->set(compact('printers'));
     }
 
+    /** @return \Cake\Http\Response|null */
     public function add()
     {
         $table = $this->fetchTable('Printers');
         $printer = $table->newEmptyEntity();
         if ($this->getRequest()->is('post')) {
             $printer = $table->patchEntity($printer, $this->getRequest()->getData());
-            $printer->user_id = $this->currentUserId();
+            $printer->set('user_id', $this->currentUserId());
             if ($table->save($printer)) {
                 $this->Flash->success('プリンターを登録しました。');
 
@@ -27,8 +29,11 @@ class PrintersController extends AppController
             }
         }
         $this->set(compact('printer'));
+
+        return null;
     }
 
+    /** @return \Cake\Http\Response|null */
     public function edit(int $id)
     {
         $table = $this->fetchTable('Printers');
@@ -45,8 +50,11 @@ class PrintersController extends AppController
             }
         }
         $this->set(compact('printer'));
+
+        return null;
     }
 
+    /** @return \Cake\Http\Response|null */
     public function delete(int $id)
     {
         $this->getRequest()->allowMethod(['post','delete']);

@@ -11,6 +11,7 @@ use RuntimeException;
 
 class UserCommand extends Command
 {
+    /** Configure command arguments. */
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         return $parser->setDescription('アカウントを管理します。')
@@ -19,6 +20,7 @@ class UserCommand extends Command
             ->addArgument('name', ['required' => false, 'help' => 'createの場合に必須']);
     }
 
+    /** Execute account creation or password reset. */
     public function execute(Arguments $args, ConsoleIo $io): int
     {
         $action = (string)$args->getArgument('action');
@@ -105,7 +107,7 @@ class UserCommand extends Command
             $command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File ' . escapeshellarg($script);
             $password = shell_exec($command);
             $io->out();
-            if ($password === null) {
+            if ($password === null || $password === false) {
                 throw new RuntimeException('パスワードを読み取れませんでした。');
             }
 
