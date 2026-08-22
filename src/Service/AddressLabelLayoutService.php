@@ -8,6 +8,9 @@ use InvalidArgumentException;
 class AddressLabelLayoutService
 {
     private const MARGIN_MM = 3.0;
+    private const POSTAL_TOP_OFFSET_MM = 4.0;
+    private const ADDRESS_START_RATIO = 0.27;
+    private const RECIPIENT_START_RATIO = 0.60;
     private const MIN_ADDRESS_PT = 12;
     private const MIN_RECIPIENT_PT = 18;
 
@@ -59,14 +62,15 @@ class AddressLabelLayoutService
 
         $elements = [];
         if ($postal !== '') {
-            $elements[] = $this->textElement($margin, $margin + $postalSize, $postal, $postalSize, 'start');
+            $postalY = $margin + $this->mmToDots(self::POSTAL_TOP_OFFSET_MM, $dpi) + $postalSize;
+            $elements[] = $this->textElement($margin, $postalY, $postal, $postalSize, 'start');
         }
-        $addressY = (int)floor($height * 0.22);
+        $addressY = (int)floor($height * self::ADDRESS_START_RATIO);
         foreach ($addressLines as $index => $line) {
             $y = $addressY + (($index + 1) * (int)round($addressSize * 1.25));
             $elements[] = $this->textElement($margin, $y, $line, $addressSize, 'start');
         }
-        $recipientStartY = (int)floor($height * 0.66);
+        $recipientStartY = (int)floor($height * self::RECIPIENT_START_RATIO);
         foreach ($recipientLines as $index => $line) {
             $y = $recipientStartY + (($index + 1) * (int)round($recipientSize * 1.25));
             $elements[] = $this->textElement(
