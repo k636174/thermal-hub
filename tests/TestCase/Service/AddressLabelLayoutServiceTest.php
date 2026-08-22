@@ -25,6 +25,7 @@ class AddressLabelLayoutServiceTest extends TestCase
         ], 203, 72.0, 100.0);
 
         $this->assertStringContainsString('width="799" height="575"', $svg);
+        $this->assertStringContainsString('font-family="Noto Sans JP"', $svg);
         $this->assertStringContainsString('〒123-4567', $svg);
         $this->assertStringContainsString('&lt;ビル&amp;101&gt;', $svg);
         $this->assertStringContainsString('山田 太郎 様', $svg);

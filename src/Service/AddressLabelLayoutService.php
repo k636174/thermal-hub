@@ -81,7 +81,7 @@ class AddressLabelLayoutService
         return sprintf(
             '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d">'
             . '<rect width="100%%" height="100%%" fill="white"/>'
-            . '<g fill="black" font-family="Noto Sans CJK JP, sans-serif">%s</g></svg>',
+            . '<g fill="black" font-family="Noto Sans JP">%s</g></svg>',
             $width,
             $height,
             $width,
