@@ -13,5 +13,10 @@ class Printer extends Entity
         'port' => true,
         'encoding' => true,
         'timeout' => true,
+        'dpi' => true,
+        'printable_width_dots' => true,
+        'label_width_mm' => true,
+        'label_length_mm' => true,
+        'raster_enabled' => true,
     ];
 }
