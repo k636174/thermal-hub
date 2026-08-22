@@ -14,6 +14,8 @@ class EscPosPrinterService
 
     private const DOTS_PER_INCH = 203;
     private const DOTS_PER_LINE = 30;
+    /** Correct the printer's measured 146mm feed to the requested 170mm. */
+    private const PAPER_FEED_CALIBRATION = 170 / 146;
 
     /** Send text to a network ESC/POS printer. */
     public function print(
@@ -86,7 +88,9 @@ class EscPosPrinterService
         $millimeters = $lengths[$paperLength];
         if ($millimeters !== null) {
             $lineCount = substr_count($normalized, "\n") + 1;
-            $targetDots = (int)round($millimeters * self::DOTS_PER_INCH / 25.4);
+            $targetDots = (int)round(
+                $millimeters * self::DOTS_PER_INCH / 25.4 * self::PAPER_FEED_CALIBRATION,
+            );
             $remainingDots = $targetDots - ($lineCount * self::DOTS_PER_LINE);
             if ($remainingDots > 0) {
                 $feed = $this->feedDots($remainingDots);
