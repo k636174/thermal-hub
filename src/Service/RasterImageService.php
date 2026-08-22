@@ -52,7 +52,7 @@ class RasterImageService
     }
 
     /** Rotate the exact print bitmap back to the label's viewing orientation. */
-    public function orientForPreview(string $rotatedPng): string
+    public function orientForPreview(string $rotatedPng, ?int $visiblePaperWidthDots = null): string
     {
         if (!class_exists('Imagick')) {
             throw new RuntimeException('画像プレビューにはPHP Imagick拡張が必要です。');
@@ -61,6 +61,19 @@ class RasterImageService
         $image->setBackgroundColor('white');
         $image->readImageBlob($rotatedPng);
         $image->rotateImage('white', -90);
+        if ($visiblePaperWidthDots !== null) {
+            $height = $image->getImageHeight();
+            if ($visiblePaperWidthDots <= 0 || $visiblePaperWidthDots > $height) {
+                throw new RuntimeException('プレビュー用紙幅の指定が不正です。');
+            }
+            $image->cropImage(
+                $image->getImageWidth(),
+                $visiblePaperWidthDots,
+                0,
+                $height - $visiblePaperWidthDots,
+            );
+            $image->setImagePage(0, 0, 0, 0);
+        }
         $image->setImageFormat('png');
         $preview = $image->getImagesBlob();
         $image->clear();

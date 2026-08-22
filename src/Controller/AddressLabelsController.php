@@ -85,7 +85,7 @@ class AddressLabelsController extends AppController
         $svg = $layout->renderSvg($label->toArray(), 203, 72.0, 100.0);
         $raster = new RasterImageService();
         $image = $raster->render($svg, 576);
-        $preview = $raster->orientForPreview($image['png']);
+        $preview = $raster->orientForPreview($image['png'], $layout->physicalPaperWidthDots(203));
 
         return $this->getResponse()
             ->withType('png')

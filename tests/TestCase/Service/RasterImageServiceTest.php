@@ -19,10 +19,10 @@ class RasterImageServiceTest extends TestCase
         $rotated->newImage(5, 9, 'white', 'png');
 
         $preview = new Imagick();
-        $preview->readImageBlob((new RasterImageService())->orientForPreview($rotated->getImagesBlob()));
+        $preview->readImageBlob((new RasterImageService())->orientForPreview($rotated->getImagesBlob(), 4));
 
         $this->assertSame(9, $preview->getImageWidth());
-        $this->assertSame(5, $preview->getImageHeight());
+        $this->assertSame(4, $preview->getImageHeight());
     }
 
     public function testBitmapToEscPosPacksMostSignificantBitFirst(): void

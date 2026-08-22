@@ -8,6 +8,7 @@ use InvalidArgumentException;
 class AddressLabelLayoutService
 {
     private const MARGIN_MM = 3.0;
+    private const PHYSICAL_PAPER_WIDTH_MM = 58.0;
     private const CONTENT_TOP_OFFSET_MM = 11.0;
     private const POSTAL_TOP_OFFSET_MM = 8.0;
     private const ADDRESS_START_RATIO = 0.27;
@@ -103,6 +104,12 @@ class AddressLabelLayoutService
     public function mmToDots(float $millimeters, int $dpi): int
     {
         return (int)round($millimeters * $dpi / 25.4);
+    }
+
+    /** Return the visible physical paper width used by the local CT-S253. */
+    public function physicalPaperWidthDots(int $dpi): int
+    {
+        return $this->mmToDots(self::PHYSICAL_PAPER_WIDTH_MM, $dpi);
     }
 
     /** Validate supported dimensions. */
