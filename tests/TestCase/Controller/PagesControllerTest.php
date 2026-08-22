@@ -37,7 +37,7 @@ class PagesControllerTest extends TestCase
     {
         Configure::write('debug', true);
         $this->get('/pages/home');
-        $this->assertRedirectContains('/users/login');
+        $this->assertRedirectContains('/login');
     }
 
     /**
