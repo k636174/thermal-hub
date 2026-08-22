@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use Cake\Controller\Controller;
+use Cake\Event\EventInterface;
 
 /**
  * Application Controller
@@ -48,5 +49,24 @@ class AppController extends Controller
          * see https://book.cakephp.org/5/en/controllers/components/form-protection.html
          */
         //$this->loadComponent('FormProtection');
+    }
+
+    /** 認証が必要な画面への未認証アクセスを拒否する。 */
+    public function beforeFilter(EventInterface $event): void
+    {
+        parent::beforeFilter($event);
+        if ($this->getName() === 'Users' && $this->getRequest()->getParam('action') === 'login') {
+            return;
+        }
+        if ($this->getRequest()->getSession()->read('Auth.User.id') === null) {
+            $event->stopPropagation();
+            $this->setResponse($this->redirect(['controller' => 'Users', 'action' => 'login']));
+        }
+    }
+
+    /** ログイン中のユーザーIDを返す。 */
+    protected function currentUserId(): int
+    {
+        return (int)$this->getRequest()->getSession()->read('Auth.User.id');
     }
 }

@@ -14,7 +14,7 @@
  * @var \App\View\AppView $this
  */
 
-$cakeDescription = 'CakePHP: the rapid development php framework';
+$cakeDescription = 'Thermal Hub';
 ?>
 <!DOCTYPE html>
 <html>
@@ -22,7 +22,7 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
-        <?= $cakeDescription ?>:
+        <?= $cakeDescription ?> -
         <?= $this->fetch('title') ?>
     </title>
     <?= $this->Html->meta('icon') ?>
@@ -36,11 +36,14 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
 <body>
     <nav class="top-nav">
         <div class="top-nav-title">
-            <a href="<?= $this->Url->build('/') ?>"><span>Cake</span>PHP</a>
+            <a href="<?= $this->Url->build('/') ?>"><span>Thermal</span> Hub</a>
         </div>
         <div class="top-nav-links">
-            <a target="_blank" rel="noopener" href="https://book.cakephp.org/5/">Documentation</a>
-            <a target="_blank" rel="noopener" href="https://api.cakephp.org/">API</a>
+            <?php if ($this->getRequest()->getSession()->read('Auth.User.id')): ?>
+                <?= $this->Html->link('印字データ', ['controller' => 'PrintJobs', 'action' => 'index']) ?>
+                <?= $this->Html->link('プリンター', ['controller' => 'Printers', 'action' => 'index']) ?>
+                <?= $this->Form->postLink('ログアウト', ['controller' => 'Users', 'action' => 'logout']) ?>
+            <?php endif; ?>
         </div>
     </nav>
     <main class="main">

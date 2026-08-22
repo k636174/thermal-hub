@@ -25,8 +25,6 @@ jobs:
             dependencies: 'lowest'
           - php-version: '8.5'
             dependencies: 'highest'
-          - php-version: '8.5'
-            dependencies: 'highest'
 
     steps:
     - uses: actions/checkout@v7
@@ -66,7 +64,7 @@ jobs:
         php-version: '8.2'
         extensions: mbstring, intl
         coverage: none
-        tools: cs2pr, phpstan:2.1
+        tools: cs2pr
 
     - name: Composer install
       uses: ramsey/composer-install@v4
@@ -75,7 +73,6 @@ jobs:
       run: vendor/bin/phpcs --report=checkstyle | cs2pr
 
     - name: Run phpstan
-      if: always()
-      run: phpstan
+      run: vendor/bin/phpstan
       env:
         SECURITY_SALT: f76f1c8475585c46c6acd3ddcb8f5e0f15de524637bb4080a08c4afe7cfc9144
