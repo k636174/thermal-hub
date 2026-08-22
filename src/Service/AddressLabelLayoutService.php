@@ -8,7 +8,7 @@ use InvalidArgumentException;
 class AddressLabelLayoutService
 {
     private const MARGIN_MM = 3.0;
-    private const POSTAL_TOP_OFFSET_MM = 4.0;
+    private const POSTAL_TOP_OFFSET_MM = 8.0;
     private const ADDRESS_START_RATIO = 0.27;
     private const RECIPIENT_START_RATIO = 0.60;
     private const MIN_ADDRESS_PT = 12;
