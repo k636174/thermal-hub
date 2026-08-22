@@ -8,6 +8,7 @@ use InvalidArgumentException;
 class AddressLabelLayoutService
 {
     private const MARGIN_MM = 3.0;
+    private const CONTENT_TOP_OFFSET_MM = 8.0;
     private const POSTAL_TOP_OFFSET_MM = 8.0;
     private const ADDRESS_START_RATIO = 0.27;
     private const RECIPIENT_START_RATIO = 0.60;
@@ -40,6 +41,7 @@ class AddressLabelLayoutService
             $recipient .= ' ' . $honorific;
         }
         $postalSize = $this->pointsToDots(16, $dpi);
+        $contentTopOffset = $this->mmToDots(self::CONTENT_TOP_OFFSET_MM, $dpi);
         $addressAreaHeight = (int)floor($height * 0.42);
         [$addressLines, $addressSize] = $this->fitText(
             implode(' ', $address),
@@ -62,15 +64,16 @@ class AddressLabelLayoutService
 
         $elements = [];
         if ($postal !== '') {
-            $postalY = $margin + $this->mmToDots(self::POSTAL_TOP_OFFSET_MM, $dpi) + $postalSize;
+            $postalY = $margin + $contentTopOffset
+                + $this->mmToDots(self::POSTAL_TOP_OFFSET_MM, $dpi) + $postalSize;
             $elements[] = $this->textElement($margin, $postalY, $postal, $postalSize, 'start');
         }
-        $addressY = (int)floor($height * self::ADDRESS_START_RATIO);
+        $addressY = (int)floor($height * self::ADDRESS_START_RATIO) + $contentTopOffset;
         foreach ($addressLines as $index => $line) {
             $y = $addressY + (($index + 1) * (int)round($addressSize * 1.25));
             $elements[] = $this->textElement($margin, $y, $line, $addressSize, 'start');
         }
-        $recipientStartY = (int)floor($height * self::RECIPIENT_START_RATIO);
+        $recipientStartY = (int)floor($height * self::RECIPIENT_START_RATIO) + $contentTopOffset;
         foreach ($recipientLines as $index => $line) {
             $y = $recipientStartY + (($index + 1) * (int)round($recipientSize * 1.25));
             $elements[] = $this->textElement(
