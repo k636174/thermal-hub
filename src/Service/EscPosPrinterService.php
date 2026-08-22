@@ -14,6 +14,7 @@ class EscPosPrinterService
 
     private const DOTS_PER_INCH = 203;
     private const DOTS_PER_LINE = 30;
+    private const COLUMNS_PER_LINE = 48;
     /** Correct the printer's measured 146mm feed to the requested 170mm. */
     private const PAPER_FEED_CALIBRATION = 170 / 146;
 
@@ -63,7 +64,7 @@ class EscPosPrinterService
     ): string {
         $lengths = [
             self::PAPER_LENGTH_NONE => null,
-            self::PAPER_LENGTH_NARROW => 170,
+            self::PAPER_LENGTH_NARROW => 175,
             self::PAPER_LENGTH_M5 => 105,
         ];
         if (!array_key_exists($paperLength, $lengths)) {
@@ -71,11 +72,6 @@ class EscPosPrinterService
         }
 
         $normalized = str_replace(["\r\n", "\r"], "\n", $body);
-        $converted = iconv('UTF-8', $encoding . '//TRANSLIT', $normalized);
-        if ($converted === false) {
-            throw new RuntimeException('本文をプリンター文字コードへ変換できません。');
-        }
-
         $textPrefix = '';
         $textSuffix = '';
         if (in_array(strtoupper($encoding), ['CP932', 'SHIFT_JIS'], true)) {
@@ -84,20 +80,66 @@ class EscPosPrinterService
             $textSuffix = "\x1c\x2e";
         }
 
-        $feed = "\x1b\x64\x03";
         $millimeters = $lengths[$paperLength];
-        if ($millimeters !== null) {
-            $lineCount = substr_count($normalized, "\n") + 1;
-            $targetDots = (int)round(
-                $millimeters * self::DOTS_PER_INCH / 25.4 * self::PAPER_FEED_CALIBRATION,
-            );
-            $remainingDots = $targetDots - ($lineCount * self::DOTS_PER_LINE);
-            if ($remainingDots > 0) {
-                $feed = $this->feedDots($remainingDots);
-            }
+        if ($millimeters === null) {
+            $converted = $this->convert($normalized, $encoding);
+
+            return "\x1b\x40" . $textPrefix . $converted . $textSuffix
+                . "\n\x1b\x64\x03\x1d\x56\x00";
         }
 
-        return "\x1b\x40" . $textPrefix . $converted . $textSuffix . "\n" . $feed . "\x1d\x56\x00";
+        $targetDots = (int)round(
+            $millimeters * self::DOTS_PER_INCH / 25.4 * self::PAPER_FEED_CALIBRATION,
+        );
+        $linesPerPage = max(1, (int)floor($targetDots / self::DOTS_PER_LINE));
+        $lines = $this->wrapLines($normalized);
+        $payload = '';
+        foreach (array_chunk($lines, $linesPerPage) as $pageLines) {
+            $converted = $this->convert(implode("\n", $pageLines), $encoding);
+            $remainingDots = $targetDots - (count($pageLines) * self::DOTS_PER_LINE);
+            $payload .= "\x1b\x40" . $textPrefix . $converted . $textSuffix . "\n"
+                . $this->feedDots($remainingDots) . "\x1d\x56\x00";
+        }
+
+        return $payload;
+    }
+
+    /** Convert UTF-8 text to the printer encoding. */
+    private function convert(string $body, string $encoding): string
+    {
+        $converted = iconv('UTF-8', $encoding . '//TRANSLIT', $body);
+        if ($converted === false) {
+            throw new RuntimeException('本文をプリンター文字コードへ変換できません。');
+        }
+
+        return $converted;
+    }
+
+    /** @return list<string> */
+    private function wrapLines(string $body): array
+    {
+        $wrapped = [];
+        foreach (explode("\n", $body) as $line) {
+            if ($line === '') {
+                $wrapped[] = '';
+                continue;
+            }
+            $current = '';
+            $width = 0;
+            foreach (mb_str_split($line) as $character) {
+                $characterWidth = mb_strwidth($character, 'UTF-8');
+                if ($current !== '' && $width + $characterWidth > self::COLUMNS_PER_LINE) {
+                    $wrapped[] = $current;
+                    $current = '';
+                    $width = 0;
+                }
+                $current .= $character;
+                $width += $characterWidth;
+            }
+            $wrapped[] = $current;
+        }
+
+        return $wrapped;
     }
 
     /** Build one or more ESC J commands (maximum 255 dots per command). */
