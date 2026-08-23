@@ -104,6 +104,9 @@ class PrintJobsController extends AppController
         if (!$printer) {
             throw new NotFoundException();
         }
+        $job->set('last_printer_id', $printer->get('id'));
+        $job->set('last_paper_guide', $this->normalizedPaperGuide($this->getRequest()->getData('paper_guide')));
+        $this->fetchTable('PrintJobs')->saveOrFail($job);
         $status = 'success';
         $message = '送信しました。';
         try {
@@ -114,9 +117,6 @@ class PrintJobsController extends AppController
                 (string)$printer->get('encoding'),
                 (int)$printer->get('timeout'),
             );
-            $job->set('last_printer_id', $printer->get('id'));
-            $job->set('last_paper_guide', $this->normalizedPaperGuide($this->getRequest()->getData('paper_guide')));
-            $this->fetchTable('PrintJobs')->saveOrFail($job);
             $this->Flash->success($message);
         } catch (Throwable $e) {
             $status = 'failed';
