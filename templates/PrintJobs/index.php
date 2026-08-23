@@ -12,7 +12,7 @@ endif; ?>
     ?><tr><td><?= h($job->title) ?></td><td><?= h($job->modified) ?></td><td>
     <?php if ($printers) :
         $selectedPrinterId = (int)($job->last_printer_id ?? 0);
-        $selectedPaperGuide = (string)($job->last_paper_guide ?? $job->paper_guide ?? 'none');
+        $selectedPaperGuide = (string)($job->paper_guide ?? $job->last_paper_guide ?? 'none');
         ?>
         <?= $this->Form->create(null, ['url' => ['action' => 'printNow', $job->id]]) ?>
         <select name="printer_id" required aria-label="プリンター">

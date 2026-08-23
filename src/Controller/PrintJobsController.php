@@ -105,7 +105,9 @@ class PrintJobsController extends AppController
             throw new NotFoundException();
         }
         $job->set('last_printer_id', $printer->get('id'));
-        $job->set('last_paper_guide', $this->normalizedPaperGuide($this->getRequest()->getData('paper_guide')));
+        $paperGuide = $this->normalizedPaperGuide($this->getRequest()->getData('paper_guide'));
+        $job->set('paper_guide', $paperGuide);
+        $job->set('last_paper_guide', $paperGuide);
         $this->fetchTable('PrintJobs')->saveOrFail($job);
         $status = 'success';
         $message = '送信しました。';
