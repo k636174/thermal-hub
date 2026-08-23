@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\EscPosPrinterService;
+use App\Service\PrintRangeGuideService;
 use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Exception\NotFoundException;
 use Cake\Http\Response;
@@ -18,7 +19,16 @@ class PrintJobsController extends AppController
         $uid = $this->currentUserId();
         $jobs = $this->fetchTable('PrintJobs')->find()->where(['user_id' => $uid])->all();
         $printers = $this->fetchTable('Printers')->find('list')->where(['user_id' => $uid])->toArray();
-        $this->set(compact('jobs', 'printers'));
+        $printGuides = [];
+        $guideService = new PrintRangeGuideService();
+        foreach ($jobs as $job) {
+            $printGuides[(int)$job->get('id')] = $guideService->analyze((string)$job->get('body'));
+        }
+        $paperGuideLimits = [
+            'narrow' => PrintRangeGuideService::NARROW_LINE_LIMIT,
+            'm5' => PrintRangeGuideService::M5_LINE_LIMIT,
+        ];
+        $this->set(compact('jobs', 'printers', 'printGuides', 'paperGuideLimits'));
     }
 
     /** @return \Cake\Http\Response|null */
@@ -90,7 +100,6 @@ class PrintJobsController extends AppController
         $uid = $this->currentUserId();
         $job = $this->ownedJob($id);
         $printerId = (int)$this->getRequest()->getData('printer_id');
-        $paperLength = (string)$this->getRequest()->getData('paper_length', EscPosPrinterService::PAPER_LENGTH_NONE);
         $printer = $this->fetchTable('Printers')->find()->where(['id' => $printerId, 'user_id' => $uid])->first();
         if (!$printer) {
             throw new NotFoundException();
@@ -104,7 +113,6 @@ class PrintJobsController extends AppController
                 (string)$job->get('body'),
                 (string)$printer->get('encoding'),
                 (int)$printer->get('timeout'),
-                $paperLength,
             );
             $this->Flash->success($message);
         } catch (Throwable $e) {
