@@ -74,6 +74,25 @@ class EscPosPrinterServiceTest extends TestCase
         $this->assertSame(2, substr_count($payload, "\x1d\x56\x00"));
     }
 
+    public function testBuildPayloadAccountsForWrappingAcrossReverseMarkup(): void
+    {
+        $body = str_repeat('a', 40) . '!!' . str_repeat('b', 20) . '!!';
+        $payload = (new EscPosPrinterService())->buildPayload($body, 'UTF-8', 'm5');
+
+        // The 60 visible columns occupy two rows even though the line contains markup.
+        $this->assertSame(917, $this->sumFeedDots($payload));
+    }
+
+    public function testBuildPayloadAccountsForQrHeightWhenPaginating(): void
+    {
+        $body = '[[QR:https://example.com]]\n' . implode("\n", array_fill(0, 28, 'line'));
+        $payload = (new EscPosPrinterService())->buildPayload($body, 'UTF-8', 'm5');
+
+        // A version 2 QR at module size 6 is 150 dots high, so it cannot share
+        // one 977-dot page with 28 text rows (840 dots).
+        $this->assertSame(2, substr_count($payload, "\x1d\x56\x00"));
+    }
+
     public function testBuildPayloadRejectsUnknownPaperLength(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -97,5 +116,12 @@ class EscPosPrinterServiceTest extends TestCase
         $this->assertStringContainsString('https://example.com', $payload);
         $this->assertStringEndsWith("\x1d\x28\x6b\x03\x00\x31\x51\x30\n\x1b\x64\x03\x1d\x56\x00", $payload);
         $this->assertStringNotContainsString('[[QR:', $payload);
+    }
+
+    private function sumFeedDots(string $payload): int
+    {
+        preg_match_all('/\x1b\x4a(.)/s', $payload, $matches);
+
+        return array_sum(array_map('ord', $matches[1]));
     }
 }
