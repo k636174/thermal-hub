@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\EscPosPrinterService;
+use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Exception\NotFoundException;
+use Cake\Http\Response;
 use Cake\I18n\DateTime;
 use Throwable;
 
@@ -64,6 +66,21 @@ class PrintJobsController extends AppController
         $this->Flash->success('印字データを削除しました。');
 
         return $this->redirect(['action' => 'index']);
+    }
+
+    /** Preview unsaved print data without persisting it. */
+    public function preview(): Response
+    {
+        $this->getRequest()->allowMethod(['post', 'put', 'patch']);
+        $table = $this->fetchTable('PrintJobs');
+        $printJob = $table->patchEntity($table->newEmptyEntity(), $this->getRequest()->getData());
+        if ($printJob->hasErrors()) {
+            throw new BadRequestException('入力内容を確認してください。');
+        }
+
+        $this->set(compact('printJob'));
+
+        return $this->render('preview');
     }
 
     /** @return \Cake\Http\Response|null */
