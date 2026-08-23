@@ -100,6 +100,21 @@ th a,
 .content form {
     margin: 0;
 }
+.print-preview-paper {
+    box-sizing: border-box;
+    width: min(100%, 48ch);
+    min-height: 20rem;
+    margin: 0 auto;
+    padding: 2rem;
+    border: 1px solid #d7d7d7;
+    background: var(--color-white);
+    color: #000;
+    font-family: monospace;
+    font-size: 1.6rem;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
 .actions a {
     font-weight: bold;
     padding: 0 0.4rem;

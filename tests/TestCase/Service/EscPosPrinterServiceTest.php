@@ -49,9 +49,9 @@ class EscPosPrinterServiceTest extends TestCase
     {
         $payload = (new EscPosPrinterService())->buildPayload("one\ntwo", 'UTF-8', 'narrow');
 
-        // Calibrated target is 1,629 dots. Two printed lines use 60 dots, leaving 1,569 dots.
+        // Calibrated target is 1,582 dots. Two printed lines use 60 dots, leaving 1,522 dots.
         $this->assertSame(
-            "\x1b\x40one\ntwo\n\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\x27\x1d\x56\x00",
+            "\x1b\x40one\ntwo\n\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xf7\x1d\x56\x00",
             $payload,
         );
     }

@@ -70,7 +70,7 @@ class EscPosPrinterService
     ): string {
         $lengths = [
             self::PAPER_LENGTH_NONE => null,
-            self::PAPER_LENGTH_NARROW => 175,
+            self::PAPER_LENGTH_NARROW => 170,
             self::PAPER_LENGTH_M5 => 105,
         ];
         if (!array_key_exists($paperLength, $lengths)) {
