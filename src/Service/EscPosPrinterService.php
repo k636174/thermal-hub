@@ -88,7 +88,7 @@ class EscPosPrinterService
 
         $millimeters = $lengths[$paperLength];
         if ($millimeters === null) {
-            $converted = $this->convert($normalized, $encoding);
+            $converted = $this->formatBody($normalized, $encoding);
 
             return "\x1b\x40" . $textPrefix . $converted . $textSuffix
                 . "\n\x1b\x64\x03\x1d\x56\x00";
@@ -101,7 +101,7 @@ class EscPosPrinterService
         $lines = $this->wrapLines($normalized);
         $payload = '';
         foreach (array_chunk($lines, $linesPerPage) as $pageLines) {
-            $converted = $this->convert(implode("\n", $pageLines), $encoding);
+            $converted = $this->formatBody(implode("\n", $pageLines), $encoding);
             $remainingDots = $targetDots - (count($pageLines) * self::DOTS_PER_LINE);
             $payload .= "\x1b\x40" . $textPrefix . $converted . $textSuffix . "\n"
                 . $this->feedDots($remainingDots) . "\x1d\x56\x00";
@@ -121,6 +121,42 @@ class EscPosPrinterService
         return $converted;
     }
 
+    /** Convert supported inline markup to ESC/POS commands. */
+    private function formatBody(string $body, string $encoding): string
+    {
+        $parts = preg_split('/(\[\[QR:.+?\]\]|!!.+?!!)/su', $body, -1, PREG_SPLIT_DELIM_CAPTURE);
+        if ($parts === false) {
+            throw new RuntimeException('印字記法を解析できません。');
+        }
+
+        $formatted = '';
+        foreach ($parts as $part) {
+            if (preg_match('/^!!(.+?)!!$/su', $part, $match) === 1) {
+                $formatted .= "\x1d\x42\x01" . $this->convert($match[1], $encoding) . "\x1d\x42\x00";
+                continue;
+            }
+            if (preg_match('/^\[\[QR:(.+?)\]\]$/su', $part, $match) === 1) {
+                $formatted .= $this->qrCode($match[1]);
+                continue;
+            }
+            $formatted .= $this->convert($part, $encoding);
+        }
+
+        return $formatted;
+    }
+
+    /** Build ESC/POS model 2 QR-code commands using UTF-8 data. */
+    private function qrCode(string $data): string
+    {
+        $storeLength = strlen($data) + 3;
+
+        return "\x1d\x28\x6b\x04\x00\x31\x41\x32\x00"
+            . "\x1d\x28\x6b\x03\x00\x31\x43\x06"
+            . "\x1d\x28\x6b\x03\x00\x31\x45\x31"
+            . "\x1d\x28\x6b" . pack('v', $storeLength) . "\x31\x50\x30" . $data
+            . "\x1d\x28\x6b\x03\x00\x31\x51\x30";
+    }
+
     /** @return list<string> */
     private function wrapLines(string $body): array
     {
@@ -128,6 +164,11 @@ class EscPosPrinterService
         foreach (explode("\n", $body) as $line) {
             if ($line === '') {
                 $wrapped[] = '';
+                continue;
+            }
+            // Keep markup intact; splitting inside a marker would print the marker literally.
+            if (str_contains($line, '!!') || str_contains($line, '[[QR:')) {
+                $wrapped[] = $line;
                 continue;
             }
             $current = '';
