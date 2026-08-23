@@ -314,3 +314,31 @@ input[type='color'] {
         content: " \2190";
     }
 }
+/* Print-job inline markup controls and preview. */
+.print-markup-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0;
+}
+.print-markup-tools button { margin-bottom: 0; }
+.print-markup-help {
+    color: #606c76;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+.print-preview-reverse {
+    background: #111;
+    color: #fff;
+    padding: 0 2px;
+}
+.print-preview-qr {
+    border: 2px solid #111;
+    display: inline-block;
+    font-family: monospace;
+    font-weight: bold;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    padding: 10px;
+    white-space: normal;
+}

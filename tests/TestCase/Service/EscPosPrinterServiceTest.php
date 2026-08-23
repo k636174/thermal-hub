@@ -79,4 +79,23 @@ class EscPosPrinterServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         (new EscPosPrinterService())->buildPayload('hello', 'UTF-8', 'unknown');
     }
+
+    public function testBuildPayloadConvertsReverseMarkersToEscPosCommands(): void
+    {
+        $payload = (new EscPosPrinterService())->buildPayload('before !!alert!! after', 'UTF-8');
+
+        $this->assertStringContainsString("before \x1d\x42\x01alert\x1d\x42\x00 after", $payload);
+        $this->assertStringNotContainsString('!!', $payload);
+    }
+
+    public function testBuildPayloadConvertsQrMarkerToEscPosQrCommands(): void
+    {
+        $payload = (new EscPosPrinterService())->buildPayload('[[QR:https://example.com]]', 'UTF-8');
+
+        $this->assertStringContainsString("\x1d\x28\x6b\x04\x00\x31\x41\x32\x00", $payload);
+        $this->assertStringContainsString("\x1d\x28\x6b\x03\x00\x31\x43\x06", $payload);
+        $this->assertStringContainsString('https://example.com', $payload);
+        $this->assertStringEndsWith("\x1d\x28\x6b\x03\x00\x31\x51\x30\n\x1b\x64\x03\x1d\x56\x00", $payload);
+        $this->assertStringNotContainsString('[[QR:', $payload);
+    }
 }
