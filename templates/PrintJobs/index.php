@@ -11,23 +11,25 @@ endif; ?>
     $guide = $printGuides[(int)$job->id];
     ?><tr><td><?= h($job->title) ?></td><td><?= h($job->modified) ?></td><td>
     <?php if ($printers) :
+        $selectedPrinterId = (int)($job->last_printer_id ?? 0);
+        $selectedPaperGuide = (string)($job->last_paper_guide ?? $job->paper_guide ?? 'none');
         ?>
         <?= $this->Form->create(null, ['url' => ['action' => 'printNow', $job->id]]) ?>
-        <?= $this->Form->select('printer_id', $printers, [
-            'required' => true,
-            'value' => isset($printers[(int)$job->last_printer_id]) ? (int)$job->last_printer_id : null,
-        ]) ?>
-        <?= $this->Form->control('paper_guide', [
-            'type' => 'select',
-            'label' => '用紙サイズ（印字範囲の目安）',
-            'class' => 'paper-guide-select',
-            'options' => [
+        <select name="printer_id" required aria-label="プリンター">
+            <?php foreach ($printers as $printerId => $printerName) : ?>
+                <option value="<?= h((string)$printerId) ?>"<?= (int)$printerId === $selectedPrinterId ? ' selected' : '' ?>><?= h($printerName) ?></option>
+            <?php endforeach; ?>
+        </select>
+        <label for="paper-guide-<?= h((string)$job->id) ?>">用紙サイズ（印字範囲の目安）</label>
+        <select name="paper_guide" id="paper-guide-<?= h((string)$job->id) ?>" class="paper-guide-select">
+            <?php foreach ([
                 'none' => '指定なし',
                 'narrow' => 'システム手帳 ナロー（17.0cm）',
                 'm5' => 'M5／マイクロ5（10.5cm）',
-            ],
-            'value' => $job->last_paper_guide ?? $job->paper_guide ?? 'none',
-        ]) ?>
+            ] as $guideValue => $guideLabel) : ?>
+                <option value="<?= h($guideValue) ?>"<?= $guideValue === $selectedPaperGuide ? ' selected' : '' ?>><?= h($guideLabel) ?></option>
+            <?php endforeach; ?>
+        </select>
         <p class="paper-guide-result"
             data-input-lines="<?= h((string)$guide['inputLines']) ?>"
             data-characters="<?= h((string)$guide['characters']) ?>"
