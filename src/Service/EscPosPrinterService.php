@@ -15,6 +15,7 @@ class EscPosPrinterService
     private const DOTS_PER_INCH = 203;
     private const DOTS_PER_LINE = 30;
     private const COLUMNS_PER_LINE = 48;
+    private const QR_MODULE_SIZE = 6;
     /** Correct the printer's measured 146mm feed to the requested 170mm. */
     private const PAPER_FEED_CALIBRATION = 170 / 146;
 
@@ -97,13 +98,20 @@ class EscPosPrinterService
         $targetDots = (int)round(
             $millimeters * self::DOTS_PER_INCH / 25.4 * self::PAPER_FEED_CALIBRATION,
         );
-        $linesPerPage = max(1, (int)floor($targetDots / self::DOTS_PER_LINE));
-        $lines = $this->wrapLines($normalized);
+        $units = $this->layoutUnits($normalized);
         $payload = '';
-        foreach (array_chunk($lines, $linesPerPage) as $pageLines) {
-            $converted = $this->formatBody(implode("\n", $pageLines), $encoding);
-            $remainingDots = $targetDots - (count($pageLines) * self::DOTS_PER_LINE);
-            $payload .= "\x1b\x40" . $textPrefix . $converted . $textSuffix . "\n"
+        foreach ($this->paginate($units, $targetDots) as $pageUnits) {
+            $converted = '';
+            $usedDots = 0;
+            foreach ($pageUnits as $unit) {
+                $converted .= $this->formatBody($unit['body'], $encoding);
+                if ($unit['type'] === 'text') {
+                    $converted .= "\n";
+                }
+                $usedDots += $unit['dots'];
+            }
+            $remainingDots = max(0, $targetDots - $usedDots);
+            $payload .= "\x1b\x40" . $textPrefix . $converted . $textSuffix
                 . $this->feedDots($remainingDots) . "\x1d\x56\x00";
         }
 
@@ -157,36 +165,124 @@ class EscPosPrinterService
             . "\x1d\x28\x6b\x03\x00\x31\x51\x30";
     }
 
-    /** @return list<string> */
-    private function wrapLines(string $body): array
+    /** @return list<array{type: string, body: string, dots: int}> */
+    private function layoutUnits(string $body): array
     {
-        $wrapped = [];
+        $units = [];
         foreach (explode("\n", $body) as $line) {
-            if ($line === '') {
-                $wrapped[] = '';
-                continue;
+            $parts = preg_split('/(\[\[QR:.+?\]\]|!!.+?!!)/su', $line, -1, PREG_SPLIT_DELIM_CAPTURE);
+            if ($parts === false) {
+                throw new RuntimeException('印字記法を解析できません。');
             }
-            // Keep markup intact; splitting inside a marker would print the marker literally.
-            if (str_contains($line, '!!') || str_contains($line, '[[QR:')) {
-                $wrapped[] = $line;
-                continue;
-            }
-            $current = '';
+
+            /** @var list<array{character: string, reverse: bool}> $row */
+            $row = [];
             $width = 0;
-            foreach (mb_str_split($line) as $character) {
-                $characterWidth = mb_strwidth($character, 'UTF-8');
-                if ($current !== '' && $width + $characterWidth > self::COLUMNS_PER_LINE) {
-                    $wrapped[] = $current;
-                    $current = '';
-                    $width = 0;
+            $hasUnit = false;
+            foreach ($parts as $part) {
+                if (preg_match('/^\[\[QR:(.+?)\]\]$/su', $part, $match) === 1) {
+                    $this->flushTextRow($units, $row, $width);
+                    $units[] = [
+                        'type' => 'qr',
+                        'body' => $part,
+                        'dots' => $this->qrHeightDots($match[1]),
+                    ];
+                    $hasUnit = true;
+                    continue;
                 }
-                $current .= $character;
-                $width += $characterWidth;
+                $reverse = preg_match('/^!!(.+?)!!$/su', $part, $match) === 1;
+                $text = $reverse ? $match[1] : $part;
+                foreach (mb_str_split($text) as $character) {
+                    $characterWidth = mb_strwidth($character, 'UTF-8');
+                    if ($row !== [] && $width + $characterWidth > self::COLUMNS_PER_LINE) {
+                        $this->flushTextRow($units, $row, $width);
+                        $hasUnit = true;
+                    }
+                    $row[] = ['character' => $character, 'reverse' => $reverse];
+                    $width += $characterWidth;
+                }
             }
-            $wrapped[] = $current;
+            if ($row !== []) {
+                $this->flushTextRow($units, $row, $width);
+            } elseif (!$hasUnit) {
+                $units[] = ['type' => 'text', 'body' => '', 'dots' => self::DOTS_PER_LINE];
+            }
         }
 
-        return $wrapped;
+        return $units;
+    }
+
+    /**
+     * @param list<array{type: string, body: string, dots: int}> $units
+     * @param list<array{character: string, reverse: bool}> $row
+     */
+    private function flushTextRow(array &$units, array &$row, int &$width): void
+    {
+        if ($row === []) {
+            return;
+        }
+
+        $body = '';
+        $reverse = false;
+        foreach ($row as $item) {
+            if ($item['reverse'] !== $reverse) {
+                $body .= '!!';
+                $reverse = $item['reverse'];
+            }
+            $body .= $item['character'];
+        }
+        if ($reverse) {
+            $body .= '!!';
+        }
+        $units[] = ['type' => 'text', 'body' => $body, 'dots' => self::DOTS_PER_LINE];
+        $row = [];
+        $width = 0;
+    }
+
+    /** Calculate the printed QR height selected automatically by the printer. */
+    private function qrHeightDots(string $data): int
+    {
+        // ISO/IEC 18004 byte-mode capacities for error correction level M.
+        $capacities = [
+            14, 26, 42, 62, 84, 106, 122, 152, 180, 213,
+            251, 287, 331, 362, 412, 450, 504, 560, 624, 666,
+            711, 779, 857, 911, 997, 1059, 1125, 1190, 1264, 1370,
+            1452, 1538, 1628, 1722, 1809, 1911, 1989, 2099, 2213, 2331,
+        ];
+        $version = 40;
+        foreach ($capacities as $index => $capacity) {
+            if (strlen($data) <= $capacity) {
+                $version = $index + 1;
+                break;
+            }
+        }
+
+        return (17 + (4 * $version)) * self::QR_MODULE_SIZE;
+    }
+
+    /**
+     * @param list<array{type: string, body: string, dots: int}> $units
+     * @return list<list<array{type: string, body: string, dots: int}>>
+     */
+    private function paginate(array $units, int $targetDots): array
+    {
+        $pages = [];
+        $page = [];
+        $usedDots = 0;
+        foreach ($units as $unit) {
+            if ($page !== [] && $usedDots + $unit['dots'] > $targetDots) {
+                $pages[] = $page;
+                $page = [];
+                $usedDots = 0;
+            }
+            $page[] = $unit;
+            $usedDots += $unit['dots'];
+        }
+        if ($page !== []) {
+            $pages[] = $page;
+        }
+
+        return $pages;
     }
 
     /** Build one or more ESC J commands (maximum 255 dots per command). */
