@@ -362,3 +362,10 @@ input[type='color'] {
     background: var(--color-message-warning-bg);
     color: var(--color-message-warning-text);
 }
+.paper-sized-textarea {
+    display: block;
+    width: min(100%, var(--paper-width));
+    height: var(--paper-length);
+    min-height: 0;
+    resize: both;
+}

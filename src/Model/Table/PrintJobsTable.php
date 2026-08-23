@@ -23,7 +23,12 @@ class PrintJobsTable extends Table
     /** Configure validation. */
     public function validationDefault(Validator $v): Validator
     {
-        return $v->notEmptyString('title')->maxLength('title', 200)->notEmptyString('body')->maxLength('body', 100000);
+        return $v->notEmptyString('title')
+            ->maxLength('title', 200)
+            ->notEmptyString('body')
+            ->maxLength('body', 100000)
+            ->notEmptyString('paper_guide')
+            ->inList('paper_guide', ['none', 'narrow', 'm5']);
     }
 
     /** Configure application rules. */

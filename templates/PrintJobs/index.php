@@ -13,7 +13,10 @@ endif; ?>
     <?php if ($printers) :
         ?>
         <?= $this->Form->create(null, ['url' => ['action' => 'printNow', $job->id]]) ?>
-        <?= $this->Form->select('printer_id', $printers, ['required' => true]) ?>
+        <?= $this->Form->select('printer_id', $printers, [
+            'required' => true,
+            'value' => isset($printers[(int)$job->last_printer_id]) ? (int)$job->last_printer_id : null,
+        ]) ?>
         <?= $this->Form->control('paper_guide', [
             'type' => 'select',
             'label' => '用紙サイズ（印字範囲の目安）',
@@ -23,6 +26,7 @@ endif; ?>
                 'narrow' => 'システム手帳 ナロー（17.0cm）',
                 'm5' => 'M5／マイクロ5（10.5cm）',
             ],
+            'value' => $job->last_paper_guide ?? $job->paper_guide ?? 'none',
         ]) ?>
         <p class="paper-guide-result"
             data-input-lines="<?= h((string)$guide['inputLines']) ?>"

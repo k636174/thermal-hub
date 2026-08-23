@@ -7,5 +7,5 @@ use Cake\ORM\Entity;
 
 class PrintJob extends Entity
 {
-    protected array $_accessible = ['title' => true, 'body' => true];
+    protected array $_accessible = ['title' => true, 'body' => true, 'paper_guide' => true];
 }

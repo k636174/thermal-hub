@@ -45,7 +45,7 @@ class PrintJobsController extends AppController
                 return $this->redirect(['action' => 'index']);
             }
         }
-        $this->set(compact('printJob'));
+        $this->setFormGuideData($printJob);
 
         return null;
     }
@@ -63,7 +63,7 @@ class PrintJobsController extends AppController
                 return $this->redirect(['action' => 'index']);
             }
         }
-        $this->set(compact('printJob'));
+        $this->setFormGuideData($printJob);
 
         return null;
     }
@@ -114,6 +114,9 @@ class PrintJobsController extends AppController
                 (string)$printer->get('encoding'),
                 (int)$printer->get('timeout'),
             );
+            $job->set('last_printer_id', $printer->get('id'));
+            $job->set('last_paper_guide', $this->normalizedPaperGuide($this->getRequest()->getData('paper_guide')));
+            $this->fetchTable('PrintJobs')->saveOrFail($job);
             $this->Flash->success($message);
         } catch (Throwable $e) {
             $status = 'failed';
@@ -146,5 +149,21 @@ class PrintJobsController extends AppController
         }
 
         return $job;
+    }
+
+    /** Supply shared paper-guide data to the add/edit form. */
+    private function setFormGuideData(object $printJob): void
+    {
+        $paperGuideLimits = [
+            'narrow' => PrintRangeGuideService::NARROW_LINE_LIMIT,
+            'm5' => PrintRangeGuideService::M5_LINE_LIMIT,
+        ];
+        $this->set(compact('printJob', 'paperGuideLimits'));
+    }
+
+    /** Return a supported guide value even for a manipulated request. */
+    private function normalizedPaperGuide(mixed $value): string
+    {
+        return in_array($value, ['narrow', 'm5'], true) ? $value : 'none';
     }
 }
