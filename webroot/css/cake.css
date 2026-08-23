@@ -342,3 +342,23 @@ input[type='color'] {
     padding: 10px;
     white-space: normal;
 }
+.paper-guide-result {
+    max-width: 34rem;
+    margin: -0.5rem 0 1rem;
+    padding: 0.8rem;
+    border-left: 3px solid var(--color-message-info-border);
+    background: var(--color-message-info-bg);
+    color: var(--color-message-info-text);
+    font-size: 1.3rem;
+    line-height: 1.5;
+}
+.paper-guide-result.within-range {
+    border-color: var(--color-message-success-border);
+    background: var(--color-message-success-bg);
+    color: var(--color-message-success-text);
+}
+.paper-guide-result.outside-range {
+    border-color: var(--color-message-warning-border);
+    background: var(--color-message-warning-bg);
+    color: var(--color-message-warning-text);
+}

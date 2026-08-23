@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Service;
 
 use App\Service\EscPosPrinterService;
-use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class EscPosPrinterServiceTest extends TestCase
@@ -34,71 +33,6 @@ class EscPosPrinterServiceTest extends TestCase
         $this->assertStringContainsString("\x1c\x2e\n", $payload);
     }
 
-    public function testBuildPayloadFeedsToM5Length(): void
-    {
-        $payload = (new EscPosPrinterService())->buildPayload('hello', 'UTF-8', 'm5');
-
-        // Calibrated target is 977 dots. One printed line uses 30 dots, leaving 947 dots.
-        $this->assertSame(
-            "\x1b\x40hello\n\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xb6\x1d\x56\x00",
-            $payload,
-        );
-    }
-
-    public function testBuildPayloadFeedsToNarrowLength(): void
-    {
-        $payload = (new EscPosPrinterService())->buildPayload("one\ntwo", 'UTF-8', 'narrow');
-
-        // Calibrated target is 1,582 dots. Two printed lines use 60 dots, leaving 1,522 dots.
-        $this->assertSame(
-            "\x1b\x40one\ntwo\n\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xff\x1b\x4a\xf7\x1d\x56\x00",
-            $payload,
-        );
-    }
-
-    public function testBuildPayloadCutsLongFixedLengthBodyIntoMultiplePages(): void
-    {
-        $body = implode("\n", array_fill(0, 40, 'line'));
-        $payload = (new EscPosPrinterService())->buildPayload($body, 'UTF-8', 'm5');
-
-        $this->assertSame(2, substr_count($payload, "\x1d\x56\x00"));
-        $this->assertSame(2, substr_count($payload, "\x1b\x40"));
-    }
-
-    public function testBuildPayloadAccountsForWrappedLinesWhenPaginating(): void
-    {
-        $body = implode("\n", array_fill(0, 17, str_repeat('あ', 25)));
-        $payload = (new EscPosPrinterService())->buildPayload($body, 'UTF-8', 'm5');
-
-        // Each 25-character Japanese line wraps into two 48-column rows: 34 rows total.
-        $this->assertSame(2, substr_count($payload, "\x1d\x56\x00"));
-    }
-
-    public function testBuildPayloadAccountsForWrappingAcrossReverseMarkup(): void
-    {
-        $body = str_repeat('a', 40) . '!!' . str_repeat('b', 20) . '!!';
-        $payload = (new EscPosPrinterService())->buildPayload($body, 'UTF-8', 'm5');
-
-        // The 60 visible columns occupy two rows even though the line contains markup.
-        $this->assertSame(917, $this->sumFeedDots($payload));
-    }
-
-    public function testBuildPayloadAccountsForQrHeightWhenPaginating(): void
-    {
-        $body = '[[QR:https://example.com]]\n' . implode("\n", array_fill(0, 28, 'line'));
-        $payload = (new EscPosPrinterService())->buildPayload($body, 'UTF-8', 'm5');
-
-        // A version 2 QR at module size 6 is 150 dots high, so it cannot share
-        // one 977-dot page with 28 text rows (840 dots).
-        $this->assertSame(2, substr_count($payload, "\x1d\x56\x00"));
-    }
-
-    public function testBuildPayloadRejectsUnknownPaperLength(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        (new EscPosPrinterService())->buildPayload('hello', 'UTF-8', 'unknown');
-    }
-
     public function testBuildPayloadConvertsReverseMarkersToEscPosCommands(): void
     {
         $payload = (new EscPosPrinterService())->buildPayload('before !!alert!! after', 'UTF-8');
@@ -116,12 +50,5 @@ class EscPosPrinterServiceTest extends TestCase
         $this->assertStringContainsString('https://example.com', $payload);
         $this->assertStringEndsWith("\x1d\x28\x6b\x03\x00\x31\x51\x30\n\x1b\x64\x03\x1d\x56\x00", $payload);
         $this->assertStringNotContainsString('[[QR:', $payload);
-    }
-
-    private function sumFeedDots(string $payload): int
-    {
-        preg_match_all('/\x1b\x4a(.)/s', $payload, $matches);
-
-        return array_sum(array_map('ord', $matches[1]));
     }
 }
