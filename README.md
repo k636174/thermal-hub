@@ -8,7 +8,7 @@
 - Composer
 - MySQL / MariaDB
 - TCP/IP接続可能なESC/POS対応プリンター
-- 宛先ラベル機能を使う場合は、PHP Imagick拡張、ImageMagick、日本語フォント（Noto Sans JP）
+- 宛先ラベル機能を使う場合は、PHP Imagick拡張、ImageMagick、日本語フォント（Noto Sans CJK JP）
 
 ## セットアップ
 
@@ -169,7 +169,7 @@ bin/cake user reset-password user@example.com
 3. プレビューで横書きレイアウトを確認する。
 4. 一覧でプリンターを選び、「90度回転して印字」を実行する。
 
-宛先ラベルはサーバー上で画像化され、時計回りに90度回転してESC/POSラスター画像として送信されます。日本語描画には `Noto Sans JP` フォントを使用するため、Webサーバーの実行ユーザーからフォントを参照できるようにしてください。
+宛先ラベルはサーバー上で画像化され、時計回りに90度回転してESC/POSラスター画像として送信されます。日本語描画には `Noto Sans CJK JP` フォントを使用するため、Webサーバーの実行ユーザーとImageMagickからフォントを参照できるようにしてください。
 
 プリンター接続はサーバーから行われます。ホストの到達性、ファイアウォール、プリンターのRAW TCP印刷設定を確認してください。
 
