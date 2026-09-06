@@ -4,11 +4,57 @@ declare(strict_types=1);
 namespace App\Service;
 
 use Imagick;
+use ImagickException;
 use RuntimeException;
 
 class RasterImageService
 {
     private const MAX_PAYLOAD_BYTES = 2_000_000;
+
+    /** Convert an uploaded raster image to a width-fitted ESC/POS bitmap. */
+    public function renderUploaded(string $imageBytes, int $printableWidthDots): array
+    {
+        if (!class_exists('Imagick')) {
+            throw new RuntimeException('画像印字にはPHP Imagick拡張が必要です。');
+        }
+        if ($printableWidthDots < 1 || $printableWidthDots > 65535) {
+            throw new RuntimeException('印字可能幅が不正です。');
+        }
+        try {
+            $image = new Imagick();
+            $image->readImageBlob($imageBytes);
+            $image->setIteratorIndex(0);
+            $image->autoOrient();
+            $image->setImageBackgroundColor('white');
+            $image = $image->mergeImageLayers(Imagick::LAYERMETHOD_FLATTEN);
+            if ($image->getImageWidth() > $printableWidthDots) {
+                $image->thumbnailImage($printableWidthDots, 0);
+            }
+            $image->setImageType(Imagick::IMGTYPE_GRAYSCALE);
+            $image->thresholdImage(0.65 * Imagick::getQuantum());
+            $width = $image->getImageWidth();
+            $height = $image->getImageHeight();
+            $pixels = [];
+            for ($y = 0; $y < $height; $y++) {
+                $row = [];
+                foreach ($image->exportImagePixels(0, $y, $width, 1, 'I', Imagick::PIXEL_CHAR) as $intensity) {
+                    $row[] = (int)$intensity < 128;
+                }
+                $pixels[] = $row;
+            }
+            $escpos = $this->bitmapToEscPos($pixels);
+            if (strlen($escpos) > self::MAX_PAYLOAD_BYTES) {
+                throw new RuntimeException('生成した印字データが上限を超えています。');
+            }
+            $image->setImageFormat('png');
+            $png = $image->getImagesBlob();
+            $image->clear();
+        } catch (ImagickException) {
+            throw new RuntimeException('画像データを読み込めません。');
+        }
+
+        return compact('png', 'escpos', 'width', 'height');
+    }
 
     /** @return array{png: string, escpos: string, width: int, height: int} */
     public function render(string $svg, int $printableWidthDots): array

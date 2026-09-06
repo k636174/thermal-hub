@@ -18,6 +18,7 @@ class UsersTable extends Table
         $this->addBehavior('Timestamp');
         $this->hasMany('Printers');
         $this->hasMany('PrintJobs');
+        $this->hasMany('ImagePrintJobs');
         $this->hasMany('PrintLogs');
     }
 

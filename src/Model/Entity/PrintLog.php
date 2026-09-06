@@ -12,6 +12,7 @@ class PrintLog extends Entity
         'printer_id' => true,
         'print_job_id' => true,
         'address_label_id' => true,
+        'image_print_job_id' => true,
         'document_type' => true,
         'status' => true,
         'message' => true,

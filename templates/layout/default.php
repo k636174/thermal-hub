@@ -41,6 +41,7 @@ $cakeDescription = 'Thermal Hub';
         <div class="top-nav-links">
             <?php if ($this->getRequest()->getSession()->read('Auth.User.id')): ?>
                 <?= $this->Html->link('印字データ', ['controller' => 'PrintJobs', 'action' => 'index']) ?>
+                <?= $this->Html->link('画像印字', ['controller' => 'ImagePrintJobs', 'action' => 'index']) ?>
                 <?= $this->Html->link('宛先ラベル', ['controller' => 'AddressLabels', 'action' => 'index']) ?>
                 <?= $this->Html->link('カレンダー', ['controller' => 'Calendars', 'action' => 'index']) ?>
                 <?= $this->Html->link('週間スケジュール', ['controller' => 'WeeklySchedules', 'action' => 'index']) ?>
