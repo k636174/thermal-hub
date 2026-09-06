@@ -73,13 +73,12 @@ class WeeklySchedulePrintService
                 'text' => self::DAY_SEPARATOR,
                 'reversed' => false,
             ];
-            $noteLines = $this->noteLines($notes[$index] ?? '');
-            $printedLines = 1 + count($noteLines);
-            $segments[] = [
-                'text' => "\n" . ($noteLines ? implode("\n", $noteLines) . "\n" : ''),
-                'reversed' => false,
-                'feedDots' => $dayHeightDots - ($printedLines * self::LINE_SPACING_DOTS),
-            ];
+            $noteSegments = $this->noteSegments($notes[$index] ?? '');
+            $segments[] = ['text' => "\n", 'reversed' => false];
+            array_push($segments, ...$noteSegments);
+            $lastSegment = array_key_last($segments);
+            $segments[$lastSegment]['feedDots'] = $dayHeightDots
+                - ((1 + self::NOTE_LINES_PER_DAY) * self::LINE_SPACING_DOTS);
         }
         $segments[] = [
             'text' => str_repeat(self::NOTE_INDENT . "\n", self::TRAILING_CALIBRATION_LINES),
@@ -96,26 +95,58 @@ class WeeklySchedulePrintService
         );
     }
 
-    /** @return list<string> */
-    private function noteLines(string $note): array
+    /**
+     * Build fixed-height note segments, interpreting !!text!! as reverse-print markup.
+     *
+     * @return list<array{text: string, reversed: bool}>
+     */
+    private function noteSegments(string $note): array
     {
-        $lines = [];
-        foreach (preg_split('/\R/u', $note) ?: [] as $sourceLine) {
-            $current = '';
-            foreach (mb_str_split($sourceLine) as $character) {
-                if ($current !== '' && mb_strwidth($current . $character) > self::NOTE_TEXT_COLUMNS) {
-                    $lines[] = self::NOTE_INDENT . $current;
-                    $current = '';
+        $parts = preg_split('/(!!.+?!!)/su', $note, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$note];
+        $lines = [[]];
+        $lineWidth = 0;
+
+        foreach ($parts as $part) {
+            $reversed = preg_match('/^!!(.+?)!!$/su', $part, $match) === 1;
+            $text = $reversed ? $match[1] : $part;
+            foreach (mb_str_split(str_replace(["\r\n", "\r"], "\n", $text)) as $character) {
+                if ($character === "\n") {
+                    $lines[] = [];
+                    $lineWidth = 0;
+                    continue;
                 }
-                $current .= $character;
+                $characterWidth = mb_strwidth($character);
+                if ($lineWidth > 0 && $lineWidth + $characterWidth > self::NOTE_TEXT_COLUMNS) {
+                    $lines[] = [];
+                    $lineWidth = 0;
+                }
+                $lines[array_key_last($lines)][] = ['text' => $character, 'reversed' => $reversed];
+                $lineWidth += $characterWidth;
             }
-            $lines[] = self::NOTE_INDENT . $current;
         }
 
-        return array_slice(
-            array_pad($lines, self::NOTE_LINES_PER_DAY, self::NOTE_INDENT),
-            0,
-            self::NOTE_LINES_PER_DAY,
-        );
+        $lines = array_slice(array_pad($lines, self::NOTE_LINES_PER_DAY, []), 0, self::NOTE_LINES_PER_DAY);
+        $segments = [];
+        foreach ($lines as $line) {
+            $this->appendSegment($segments, self::NOTE_INDENT, false);
+            foreach ($line as $character) {
+                $this->appendSegment($segments, $character['text'], $character['reversed']);
+            }
+            $this->appendSegment($segments, "\n", false);
+        }
+
+        return $segments;
+    }
+
+    /** @param list<array{text: string, reversed: bool}> $segments */
+    private function appendSegment(array &$segments, string $text, bool $reversed): void
+    {
+        $last = array_key_last($segments);
+        if ($last !== null && $segments[$last]['reversed'] === $reversed) {
+            $segments[$last]['text'] .= $text;
+
+            return;
+        }
+        $segments[] = ['text' => $text, 'reversed' => $reversed];
     }
 }

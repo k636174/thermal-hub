@@ -30,7 +30,7 @@ class WeeklySchedulePrintServiceTest extends TestCase
         $this->assertPaperTravelIncludesThreeCalibrationLines($payload);
     }
 
-    public function testBuildPayloadLeavesScheduleMarkupLiteral(): void
+    public function testBuildPayloadReversesTextEnclosedInExclamationMarks(): void
     {
         $payload = (new WeeklySchedulePrintService())->buildPayload(
             new DateTimeImmutable('2026-09-07'),
@@ -39,8 +39,23 @@ class WeeklySchedulePrintServiceTest extends TestCase
             'UTF-8',
         );
 
-        $this->assertStringContainsString('!!重要!!', $payload);
-        $this->assertStringNotContainsString("\x1d\x42\x01", $payload);
+        $this->assertStringNotContainsString('!!', $payload);
+        $this->assertStringContainsString("　　\x1d\x42\x01重要\x1d\x42\x00\n", $payload);
+        $this->assertSame(1, substr_count($payload, "\x1d\x42\x01"));
+    }
+
+    public function testBuildPayloadKeepsReverseMarkupAcrossWrappedLines(): void
+    {
+        $payload = (new WeeklySchedulePrintService())->buildPayload(
+            new DateTimeImmutable('2026-09-07'),
+            ['!!' . str_repeat('重', 30) . '!!'],
+            [],
+            'UTF-8',
+        );
+
+        $this->assertStringNotContainsString('!!', $payload);
+        $this->assertSame(30, substr_count($payload, '重'));
+        $this->assertSame(2, substr_count($payload, "\x1d\x42\x01"));
     }
 
     public function testBuildPayloadWrapsLongJapaneseNoteWithinFixedDayHeight(): void

@@ -68,7 +68,7 @@ $printerRegistrationLink = $this->Html->link('プリンターを登録', ['contr
                         <label for="note-<?= $index ?>">予定</label>
                         <textarea
                             id="note-<?= $index ?>" name="notes[<?= $index ?>]" maxlength="120"
-                            rows="6" placeholder="予定を入力（120文字・6行まで）"
+                            rows="6" placeholder="予定を入力（120文字・6行まで、!!文字!!で反転）"
                         ><?= h($day['note']) ?></textarea>
                     </div>
                     <label class="invert-toggle">
@@ -96,7 +96,7 @@ $printerRegistrationLink = $this->Html->link('プリンターを登録', ['contr
                 'confirm' => $weekStart->format('Y年n月j日') . 'からの週間スケジュールを印字しますか？',
                 'formaction' => $this->Url->build(['action' => 'printNow']),
             ]) ?>
-            <p>ESC/POSテキストで直接送信します。予定は印字時だけ使用され、サーバーには保存されません。</p>
+            <p>ESC/POSテキストで直接送信します。予定の <code>!!文字!!</code> は、記号を除いて反転印字します。</p>
         <?php else : ?>
             <p>印字するには<?= $printerRegistrationLink ?>してください。</p>
         <?php endif; ?>
