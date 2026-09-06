@@ -17,6 +17,10 @@ class ImagePrintJobsTable extends Table
         $this->setPrimaryKey('id');
         $this->addBehavior('Timestamp');
         $this->belongsTo('Users');
+        $this->belongsTo('LastPrinters', [
+            'className' => 'Printers',
+            'foreignKey' => 'last_printer_id',
+        ]);
         $this->hasMany('PrintLogs');
     }
 

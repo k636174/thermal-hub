@@ -31,7 +31,11 @@
 <td><?= h($image->original_name) ?><br><?= h(number_format((int)$image->file_size / 1024, 1)) ?> KB</td>
 <td><?php if ($printers) : ?>
 <?= $this->Form->create(null, ['url' => ['action' => 'printNow', $image->id]]) ?>
-<?= $this->Form->select('printer_id', $printers, ['required' => true, 'aria-label' => 'プリンター']) ?>
+<?= $this->Form->select('printer_id', $printers, [
+    'required' => true,
+    'aria-label' => 'プリンター',
+    'value' => isset($printers[(int)$image->last_printer_id]) ? (int)$image->last_printer_id : null,
+]) ?>
 <?= $this->Form->button('印字', ['confirm' => 'この画像を印字しますか？']) ?>
 <?= $this->Form->end() ?>
 <?php endif; ?></td>

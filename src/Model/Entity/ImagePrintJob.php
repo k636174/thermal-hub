@@ -13,5 +13,6 @@ class ImagePrintJob extends Entity
         'original_name' => true,
         'mime_type' => true,
         'file_size' => true,
+        'last_printer_id' => true,
     ];
 }

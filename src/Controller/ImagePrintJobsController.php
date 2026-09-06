@@ -98,6 +98,8 @@ class ImagePrintJobsController extends AppController
         if (!$printer) {
             throw new NotFoundException();
         }
+        $image->set('last_printer_id', $printer->get('id'));
+        $this->fetchTable('ImagePrintJobs')->saveOrFail($image);
         $status = 'success';
         $message = '送信しました。';
         try {

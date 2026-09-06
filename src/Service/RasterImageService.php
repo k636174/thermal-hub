@@ -27,9 +27,17 @@ class RasterImageService
             $image->autoOrient();
             $image->setImageBackgroundColor('white');
             $image = $image->mergeImageLayers(Imagick::LAYERMETHOD_FLATTEN);
-            if ($image->getImageWidth() > $printableWidthDots) {
-                $image->thumbnailImage($printableWidthDots, 0);
+            $sourceWidth = $image->getImageWidth();
+            $sourceHeight = $image->getImageHeight();
+            if ($sourceWidth < 1 || $sourceHeight < 1) {
+                throw new RuntimeException('画像サイズが不正です。');
             }
+            $targetHeight = max(1, (int)round($sourceHeight * $printableWidthDots / $sourceWidth));
+            $estimatedBytes = ((int)ceil($printableWidthDots / 8) * $targetHeight) + 8;
+            if ($targetHeight > 65535 || $estimatedBytes > self::MAX_PAYLOAD_BYTES) {
+                throw new RuntimeException('最大幅へ変換した画像の印字データが上限を超えています。');
+            }
+            $image->resizeImage($printableWidthDots, $targetHeight, Imagick::FILTER_LANCZOS, 1);
             $image->setImageType(Imagick::IMGTYPE_GRAYSCALE);
             $image->thresholdImage(0.65 * Imagick::getQuantum());
             $width = $image->getImageWidth();
