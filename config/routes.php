@@ -57,6 +57,7 @@ return function (RouteBuilder $routes): void {
          */
         $builder->connect('/', ['controller' => 'PrintJobs', 'action' => 'index']);
         $builder->connect('/login', ['controller' => 'Users', 'action' => 'login']);
+        $builder->connect('/calendars', ['controller' => 'Calendars', 'action' => 'index']);
 
         /*
          * ...and connect the rest of 'Pages' controller's URLs.
