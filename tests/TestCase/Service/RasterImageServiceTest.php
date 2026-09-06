@@ -102,4 +102,18 @@ class RasterImageServiceTest extends TestCase
         $this->assertSame(40, $rendered['width']);
         $this->assertSame(20, $rendered['height']);
     }
+
+    public function testRenderUploadedFitsTallImageWithinPrintableLength(): void
+    {
+        if (!class_exists('Imagick')) {
+            $this->markTestSkipped('Imagick is not installed.');
+        }
+        $source = new Imagick();
+        $source->newImage(20, 40, 'black', 'png');
+
+        $rendered = (new RasterImageService())->renderUploaded($source->getImagesBlob(), 40, 30);
+
+        $this->assertSame(15, $rendered['width']);
+        $this->assertSame(30, $rendered['height']);
+    }
 }

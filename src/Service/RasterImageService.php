@@ -12,13 +12,19 @@ class RasterImageService
     private const MAX_PAYLOAD_BYTES = 2_000_000;
 
     /** Convert an uploaded raster image to a width-fitted ESC/POS bitmap. */
-    public function renderUploaded(string $imageBytes, int $printableWidthDots): array
-    {
+    public function renderUploaded(
+        string $imageBytes,
+        int $printableWidthDots,
+        ?int $printableHeightDots = null,
+    ): array {
         if (!class_exists('Imagick')) {
             throw new RuntimeException('画像印字にはPHP Imagick拡張が必要です。');
         }
         if ($printableWidthDots < 1 || $printableWidthDots > 65535) {
             throw new RuntimeException('印字可能幅が不正です。');
+        }
+        if ($printableHeightDots !== null && ($printableHeightDots < 1 || $printableHeightDots > 65535)) {
+            throw new RuntimeException('印字可能長が不正です。');
         }
         try {
             $image = new Imagick();
@@ -32,12 +38,17 @@ class RasterImageService
             if ($sourceWidth < 1 || $sourceHeight < 1) {
                 throw new RuntimeException('画像サイズが不正です。');
             }
-            $targetHeight = max(1, (int)round($sourceHeight * $printableWidthDots / $sourceWidth));
-            $estimatedBytes = ((int)ceil($printableWidthDots / 8) * $targetHeight) + 8;
+            $scale = $printableWidthDots / $sourceWidth;
+            if ($printableHeightDots !== null) {
+                $scale = min($scale, $printableHeightDots / $sourceHeight);
+            }
+            $targetWidth = max(1, min($printableWidthDots, (int)floor($sourceWidth * $scale)));
+            $targetHeight = max(1, (int)floor($sourceHeight * $scale));
+            $estimatedBytes = ((int)ceil($targetWidth / 8) * $targetHeight) + 8;
             if ($targetHeight > 65535 || $estimatedBytes > self::MAX_PAYLOAD_BYTES) {
                 throw new RuntimeException('最大幅へ変換した画像の印字データが上限を超えています。');
             }
-            $image->resizeImage($printableWidthDots, $targetHeight, Imagick::FILTER_LANCZOS, 1);
+            $image->resizeImage($targetWidth, $targetHeight, Imagick::FILTER_LANCZOS, 1);
             $image->setImageType(Imagick::IMGTYPE_GRAYSCALE);
             $image->thresholdImage(0.65 * Imagick::getQuantum());
             $width = $image->getImageWidth();

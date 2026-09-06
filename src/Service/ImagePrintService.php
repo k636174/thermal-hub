@@ -20,8 +20,9 @@ class ImagePrintService
         $rendered = (new RasterImageService())->renderUploaded(
             $bytes,
             (int)$printer['printable_width_dots'],
+            (int)floor((float)$printer['label_length_mm'] * (int)$printer['dpi'] / 25.4),
         );
-        $payload = "\x1b\x40\x1b\x33\x00\x1b\x61\x01" . $rendered['escpos'] . "\n\x1d\x56\x00";
+        $payload = "\x1b\x40\x1b\x33\x00\x1b\x61\x01" . $rendered['escpos'] . "\x1d\x56\x00";
         (new EscPosPrinterService())->sendPayload(
             (string)$printer['host'],
             (int)$printer['port'],
