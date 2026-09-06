@@ -6,10 +6,15 @@
  * @var array<array{date: \DateTimeImmutable, inMonth: bool, isToday: bool}> $days
  * @var \DateTimeImmutable $previousMonth
  * @var \DateTimeImmutable $nextMonth
+ * @var array<int, string> $printers
  */
 $this->assign('title', 'カレンダー');
 $this->Html->css('calendar', ['block' => true]);
 $weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+$printerRegistrationLink = $this->Html->link(
+    'プリンターを登録',
+    ['controller' => 'Printers', 'action' => 'add'],
+);
 ?>
 <div class="calendar-page">
     <div class="calendar-toolbar no-print">
@@ -17,7 +22,6 @@ $weekdays = ['日', '月', '火', '水', '木', '金', '土'];
             <p class="calendar-eyebrow">MONTHLY PLANNER</p>
             <h1>カレンダー</h1>
         </div>
-        <button type="button" class="calendar-print-button" onclick="window.print()">印刷する</button>
     </div>
 
     <div class="calendar-controls no-print">
@@ -49,6 +53,30 @@ $weekdays = ['日', '月', '火', '水', '木', '金', '土'];
                 'month' => $nextMonth->format('n'),
             ], ['class' => 'button button-outline']) ?>
         </div>
+    </div>
+
+    <div class="calendar-printer-panel">
+        <?php if ($printers) : ?>
+            <?= $this->Form->create(null, [
+                'url' => ['action' => 'printNow'],
+                'class' => 'calendar-print-form',
+            ]) ?>
+            <?= $this->Form->hidden('year', ['value' => $year]) ?>
+            <?= $this->Form->hidden('month', ['value' => $month]) ?>
+            <?= $this->Form->control('printer_id', [
+                'type' => 'select',
+                'label' => '印字先プリンター',
+                'options' => $printers,
+                'required' => true,
+            ]) ?>
+            <?= $this->Form->button('サーマルプリンターで印字', [
+                'confirm' => $year . '年' . $month . '月のカレンダーを印字しますか？',
+            ]) ?>
+            <?= $this->Form->end() ?>
+            <p>プリンター設定の印字可能幅とラベル長に合わせ、横長画像として送信します。</p>
+        <?php else : ?>
+            <p>印字するには画像印字が有効な<?= $printerRegistrationLink ?>してください。</p>
+        <?php endif; ?>
     </div>
 
     <section class="calendar-sheet" aria-label="<?= h($year . '年' . $month . '月のカレンダー') ?>">

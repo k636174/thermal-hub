@@ -55,8 +55,37 @@
 
 .calendar-date-form button,
 .calendar-shortcuts .button,
-.calendar-print-button {
+.calendar-print-form button {
     margin-bottom: 0;
+}
+
+.calendar-printer-panel {
+    margin-bottom: 2.4rem;
+    padding: 1.6rem;
+    border-left: 4px solid #263d50;
+    border-radius: .4rem;
+    background: #fff;
+}
+
+.calendar-print-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+.calendar-print-form .input {
+    min-width: 24rem;
+    margin: 0;
+}
+
+.calendar-print-form select {
+    margin: 0;
+}
+
+.calendar-printer-panel p {
+    margin: 1rem 0 0;
+    color: #606c76;
+    font-size: 1.3rem;
 }
 
 .calendar-sheet {
@@ -173,71 +202,13 @@
     }
 }
 
-@page {
-    size: A4 landscape;
-    margin: 8mm;
-}
-
-@media print {
-    body,
-    .main,
-    .container {
-        max-width: none;
-        margin: 0;
-        padding: 0;
-        background: #fff;
+@media screen and (max-width: 700px) {
+    .calendar-print-form {
+        align-items: stretch;
+        flex-direction: column;
     }
 
-    .top-nav,
-    .no-print,
-    footer {
-        display: none !important;
-    }
-
-    .calendar-page {
-        overflow: visible;
-    }
-
-    .calendar-sheet {
-        width: 100%;
-        border-color: #89949c;
-        border-radius: 0;
-        box-shadow: none;
-        break-inside: avoid;
-    }
-
-    .calendar-heading {
-        padding: 3mm 5mm 2mm;
-    }
-
-    .calendar-heading h2 {
-        font-size: 9mm;
-    }
-
-    .calendar-heading p,
-    .calendar-heading h2 span {
-        font-size: 4mm;
-    }
-
-    .calendar-weekday {
-        padding: 1.5mm;
-        font-size: 3mm;
-    }
-
-    .calendar-day {
-        min-height: 26mm;
-        padding: 1.5mm;
-        print-color-adjust: exact;
-        -webkit-print-color-adjust: exact;
-    }
-
-    .calendar-day-number {
-        width: 6mm;
-        height: 6mm;
-        font-size: 3.5mm;
-    }
-
-    .calendar-note-lines i {
-        height: 5mm;
+    .calendar-print-form .input {
+        min-width: 0;
     }
 }
