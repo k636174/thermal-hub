@@ -73,7 +73,7 @@ $printerRegistrationLink = $this->Html->link(
                 'confirm' => $year . '年' . $month . '月のカレンダーを印字しますか？',
             ]) ?>
             <?= $this->Form->end() ?>
-            <p>プリンター設定の印字可能幅とラベル長に合わせ、横長画像として送信します。</p>
+            <p>プリンターの印字可能幅に合わせ、ナローサイズ（長さ170mm）の横長画像として送信します。</p>
         <?php else : ?>
             <p>印字するには画像印字が有効な<?= $printerRegistrationLink ?>してください。</p>
         <?php endif; ?>

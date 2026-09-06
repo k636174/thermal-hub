@@ -8,23 +8,25 @@ use InvalidArgumentException;
 
 class CalendarLayoutService
 {
+    public const NARROW_LENGTH_MM = 170.0;
+
     /** Render a horizontal six-week monthly calendar as SVG. */
     public function renderSvg(
         int $year,
         int $month,
         int $dpi,
         int $printableWidthDots,
-        float $labelLengthMm,
     ): string {
-        $this->validate($year, $month, $dpi, $printableWidthDots, $labelLengthMm);
-        $canvasWidth = (int)round($labelLengthMm * $dpi / 25.4);
+        $this->validate($year, $month, $dpi, $printableWidthDots);
+        $canvasWidth = $this->mmToDots(self::NARROW_LENGTH_MM, $dpi);
         $canvasHeight = $printableWidthDots;
-        $margin = max(8, (int)round($dpi * 2 / 25.4));
+        $horizontalMargin = $this->mmToDots(5.0, $dpi);
+        $verticalMargin = $this->mmToDots(2.0, $dpi);
         $headerHeight = max(42, (int)round($canvasHeight * 0.12));
         $weekdayHeight = max(25, (int)round($canvasHeight * 0.07));
-        $gridTop = $margin + $headerHeight + $weekdayHeight;
-        $gridBottom = $canvasHeight - $margin;
-        $gridWidth = $canvasWidth - ($margin * 2);
+        $gridTop = $verticalMargin + $headerHeight + $weekdayHeight;
+        $gridBottom = $canvasHeight - $verticalMargin;
+        $gridWidth = $canvasWidth - ($horizontalMargin * 2);
         $columnWidth = $gridWidth / 7;
         $rowHeight = ($gridBottom - $gridTop) / 6;
         $titleSize = max(18, (int)round($headerHeight * 0.48));
@@ -34,8 +36,8 @@ class CalendarLayoutService
         $elements = [
             sprintf(
                 '<text x="%d" y="%d" font-size="%d" font-weight="bold">%d年%d月</text>',
-                $margin,
-                $margin + (int)round($headerHeight * 0.68),
+                $horizontalMargin,
+                $verticalMargin + (int)round($headerHeight * 0.68),
                 $titleSize,
                 $year,
                 $month,
@@ -43,8 +45,8 @@ class CalendarLayoutService
         ];
         $weekdays = ['日', '月', '火', '水', '木', '金', '土'];
         foreach ($weekdays as $column => $weekday) {
-            $x = $margin + (($column + 0.5) * $columnWidth);
-            $y = $margin + $headerHeight + (int)round($weekdayHeight * 0.68);
+            $x = $horizontalMargin + (($column + 0.5) * $columnWidth);
+            $y = $verticalMargin + $headerHeight + (int)round($weekdayHeight * 0.68);
             $elements[] = sprintf(
                 '<text x="%.1f" y="%d" font-size="%d" text-anchor="middle" font-weight="bold">%s</text>',
                 $x,
@@ -55,7 +57,7 @@ class CalendarLayoutService
         }
 
         for ($column = 0; $column <= 7; $column++) {
-            $x = $margin + ($column * $columnWidth);
+            $x = $horizontalMargin + ($column * $columnWidth);
             $elements[] = sprintf(
                 '<line x1="%.1f" y1="%d" x2="%.1f" y2="%.1f"/>',
                 $x,
@@ -68,9 +70,9 @@ class CalendarLayoutService
             $y = $gridTop + ($row * $rowHeight);
             $elements[] = sprintf(
                 '<line x1="%d" y1="%.1f" x2="%d" y2="%.1f"/>',
-                $margin,
+                $horizontalMargin,
                 $y,
-                $canvasWidth - $margin,
+                $canvasWidth - $horizontalMargin,
                 $y,
             );
         }
@@ -81,7 +83,7 @@ class CalendarLayoutService
             $date = $calendarStart->modify('+' . $index . ' days');
             $column = $index % 7;
             $row = intdiv($index, 7);
-            $x = $margin + ($column * $columnWidth) + max(4, $columnWidth * 0.08);
+            $x = $horizontalMargin + ($column * $columnWidth) + max(4, $columnWidth * 0.08);
             $y = $gridTop + ($row * $rowHeight) + $daySize + max(2, $rowHeight * 0.05);
             $outsideMonth = $date->format('Y-m') !== $monthStart->format('Y-m');
             $elements[] = sprintf(
@@ -119,13 +121,19 @@ class CalendarLayoutService
     }
 
     /** Validate printer and month dimensions before allocating an image. */
-    private function validate(int $year, int $month, int $dpi, int $width, float $length): void
+    private function validate(int $year, int $month, int $dpi, int $width): void
     {
         if ($year < 1900 || $year > 2100 || $month < 1 || $month > 12) {
             throw new InvalidArgumentException('年月の指定が不正です。');
         }
-        if ($dpi !== 203 || $width < 128 || $width > 832 || $length < 20 || $length > 300) {
+        if ($dpi !== 203 || $width < 128 || $width > 832) {
             throw new InvalidArgumentException('プリンターの印字寸法が不正です。');
         }
+    }
+
+    /** Convert millimeters to printer dots. */
+    private function mmToDots(float $millimeters, int $dpi): int
+    {
+        return (int)round($millimeters * $dpi / 25.4);
     }
 }
