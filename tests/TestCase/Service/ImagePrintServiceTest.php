@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 class ImagePrintServiceTest extends TestCase
 {
-    public function testPayloadFeedsEightLinesBeforeCutting(): void
+    public function testPayloadFeedsFullWidthSpaceLinesBeforeCutting(): void
     {
         if (!class_exists('Imagick')) {
             $this->markTestSkipped('Imagick is not installed.');
@@ -21,8 +21,13 @@ class ImagePrintServiceTest extends TestCase
             'printable_width_dots' => 20,
             'label_length_mm' => 100,
             'dpi' => 203,
+            'encoding' => 'CP932',
         ]);
 
-        $this->assertStringEndsWith("\x1b\x64\x08\x1d\x56\x00", $payload);
+        $spaceLines = str_repeat("\x81\x40\n", 8);
+        $this->assertStringEndsWith(
+            "\x1c\x43\x01\x1c\x26" . $spaceLines . "\x1c\x2e\x1d\x56\x00",
+            $payload,
+        );
     }
 }

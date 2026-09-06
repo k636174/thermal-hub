@@ -36,6 +36,21 @@ class ImagePrintService
         );
 
         return "\x1b\x40\x1b\x33\x00\x1b\x61\x01" . $rendered['escpos']
-            . "\x1b\x64\x08\x1d\x56\x00";
+            . $this->fullWidthSpaceFeed((string)$printer['encoding']) . "\x1d\x56\x00";
+    }
+
+    /** Build visible text lines because some printers ignore ESC d after raster data. */
+    private function fullWidthSpaceFeed(string $encoding): string
+    {
+        $feed = str_repeat("　\n", 8);
+        $converted = iconv('UTF-8', $encoding . '//TRANSLIT', $feed);
+        if ($converted === false) {
+            throw new RuntimeException('紙送り文字をプリンター文字コードへ変換できません。');
+        }
+        if (in_array(strtoupper($encoding), ['CP932', 'SHIFT_JIS'], true)) {
+            return "\x1c\x43\x01\x1c\x26" . $converted . "\x1c\x2e";
+        }
+
+        return $converted;
     }
 }
