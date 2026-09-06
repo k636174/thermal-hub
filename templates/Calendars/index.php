@@ -7,6 +7,7 @@
  * @var \DateTimeImmutable $previousMonth
  * @var \DateTimeImmutable $nextMonth
  * @var array<int, string> $printers
+ * @var int|null $selectedPrinterId
  */
 $this->assign('title', 'カレンダー');
 $this->Html->css('calendar', ['block' => true]);
@@ -67,6 +68,7 @@ $printerRegistrationLink = $this->Html->link(
                 'type' => 'select',
                 'label' => '印字先プリンター',
                 'options' => $printers,
+                'value' => $selectedPrinterId,
                 'required' => true,
             ]) ?>
             <?= $this->Form->button('サーマルプリンターで印字', [

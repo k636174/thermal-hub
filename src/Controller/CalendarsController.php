@@ -46,14 +46,25 @@ class CalendarsController extends AppController
             ];
         }
 
+        $uid = $this->currentUserId();
+        $printers = $this->fetchTable('Printers')->find('list')
+            ->where(['user_id' => $uid, 'raster_enabled' => true])->toArray();
+        $lastPrint = $this->fetchTable('PrintLogs')->find()
+            ->select(['printer_id'])
+            ->where(['user_id' => $uid, 'document_type' => 'calendar'])
+            ->orderBy(['printed_at' => 'DESC', 'id' => 'DESC'])
+            ->first();
+        $lastPrinterId = (int)($lastPrint?->get('printer_id') ?? 0);
+        $selectedPrinterId = array_key_exists($lastPrinterId, $printers) ? $lastPrinterId : null;
+
         $this->set([
             'year' => $year,
             'month' => $month,
             'days' => $days,
             'previousMonth' => $monthStart->modify('-1 month'),
             'nextMonth' => $monthStart->modify('+1 month'),
-            'printers' => $this->fetchTable('Printers')->find('list')
-                ->where(['user_id' => $this->currentUserId(), 'raster_enabled' => true])->toArray(),
+            'printers' => $printers,
+            'selectedPrinterId' => $selectedPrinterId,
         ]);
     }
 
