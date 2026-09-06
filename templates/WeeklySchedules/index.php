@@ -25,13 +25,24 @@ $printerRegistrationLink = $this->Html->link('プリンターを登録', ['contr
         <nav class="calendar-shortcuts" aria-label="週の移動">
             <?= $this->Html->link(
                 '‹ 前週',
-                ['date' => $previousWeek->format('Y-m-d')],
+                [
+                    'controller' => 'WeeklySchedules',
+                    'action' => 'index',
+                    '?' => ['date' => $previousWeek->format('Y-m-d')],
+                ],
                 ['class' => 'button button-outline'],
             ) ?>
-            <?= $this->Html->link('今週', ['action' => 'index'], ['class' => 'button button-outline']) ?>
+            <?= $this->Html->link('今週', [
+                'controller' => 'WeeklySchedules',
+                'action' => 'index',
+            ], ['class' => 'button button-outline']) ?>
             <?= $this->Html->link(
                 '次週 ›',
-                ['date' => $nextWeek->format('Y-m-d')],
+                [
+                    'controller' => 'WeeklySchedules',
+                    'action' => 'index',
+                    '?' => ['date' => $nextWeek->format('Y-m-d')],
+                ],
                 ['class' => 'button button-outline'],
             ) ?>
         </nav>

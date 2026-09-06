@@ -25,6 +25,9 @@ class WeeklySchedulesControllerTest extends TestCase
         $this->assertResponseContains('2026年9月7日');
         $this->assertResponseContains('2026-09-07');
         $this->assertResponseContains('2026-09-13');
+        $this->assertResponseContains('href="/weekly-schedules?date=2026-08-31"');
+        $this->assertResponseContains('href="/weekly-schedules">今週</a>');
+        $this->assertResponseContains('href="/weekly-schedules?date=2026-09-14"');
         $body = (string)$this->_response->getBody();
         $this->assertSame(7, substr_count($body, 'data-date='));
     }
