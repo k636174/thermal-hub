@@ -6,7 +6,7 @@
 <?= $this->Form->control('title', ['label' => 'タイトル（省略時はファイル名）']) ?>
 <?= $this->Form->control('image', [
     'type' => 'file',
-    'label' => '画像（JPEG・PNG・WebP、10MB以下）',
+    'label' => '画像（JPEG・PNG・WebP、20MB以下）',
     'accept' => 'image/jpeg,image/png,image/webp',
     'required' => true,
 ]) ?>

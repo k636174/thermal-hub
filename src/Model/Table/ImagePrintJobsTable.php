@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Service\ImageStorageService;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -32,7 +33,7 @@ class ImagePrintJobsTable extends Table
             ->notEmptyString('storage_name')->maxLength('storage_name', 80)
             ->notEmptyString('original_name')->maxLength('original_name', 255)
             ->inList('mime_type', ['image/jpeg', 'image/png', 'image/webp'])
-            ->integer('file_size')->range('file_size', [1, 10_000_000]);
+            ->integer('file_size')->range('file_size', [1, ImageStorageService::MAX_FILE_SIZE]);
     }
 
     /** Require an existing owner and unique generated filename. */

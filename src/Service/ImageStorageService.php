@@ -11,7 +11,7 @@ use RuntimeException;
 
 class ImageStorageService
 {
-    public const MAX_FILE_SIZE = 10_000_000;
+    public const MAX_FILE_SIZE = 20_000_000;
     private const MIME_EXTENSIONS = [
         'image/jpeg' => 'jpg',
         'image/png' => 'png',
@@ -29,7 +29,7 @@ class ImageStorageService
     {
         if ($upload->getError() !== UPLOAD_ERR_OK) {
             $message = match ($upload->getError()) {
-                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => '画像は10MB以下にしてください。',
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => '画像は20MB以下にしてください。',
                 UPLOAD_ERR_PARTIAL => '画像のアップロードが途中で中断されました。',
                 UPLOAD_ERR_NO_FILE => '画像を選択してください。',
                 default => '画像のアップロードに失敗しました。',
@@ -38,13 +38,13 @@ class ImageStorageService
         }
         $size = $upload->getSize();
         if ($size === null || $size < 1 || $size > self::MAX_FILE_SIZE) {
-            throw new RuntimeException('画像は10MB以下にしてください。');
+            throw new RuntimeException('画像は20MB以下にしてください。');
         }
         $stream = $upload->getStream();
         $stream->rewind();
         $contents = $stream->getContents();
         if (strlen($contents) !== $size) {
-            throw new RuntimeException('画像は10MB以下にしてください。');
+            throw new RuntimeException('画像は20MB以下にしてください。');
         }
         $mime = (new finfo(FILEINFO_MIME_TYPE))->buffer($contents);
         if (!is_string($mime) || !isset(self::MIME_EXTENSIONS[$mime])) {
