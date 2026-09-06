@@ -17,8 +17,11 @@ class CalendarLayoutServiceTest extends TestCase
         $this->assertStringContainsString('2026年9月', $svg);
         $this->assertStringContainsString('data-date="2026-08-30"', $svg);
         $this->assertStringContainsString('data-date="2026-10-10"', $svg);
-        $this->assertStringContainsString('<line x1="40.0"', $svg);
-        $this->assertStringContainsString('<line x1="1319.0"', $svg);
+        $this->assertStringContainsString('class="calendar-grid-line"', $svg);
+        $this->assertStringContainsString('class="calendar-grid-border"', $svg);
+        $this->assertStringContainsString('width="3"', $svg);
+        $this->assertStringContainsString('width="5"', $svg);
+        $this->assertStringContainsString('fill="#000000"', $svg);
         $this->assertSame(42, substr_count($svg, 'data-date='));
     }
 

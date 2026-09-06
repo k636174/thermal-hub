@@ -58,22 +58,28 @@ class CalendarLayoutService
 
         for ($column = 0; $column <= 7; $column++) {
             $x = $horizontalMargin + ($column * $columnWidth);
+            $thickness = in_array($column, [0, 7], true) ? 5 : 3;
+            $class = $thickness === 5 ? 'calendar-grid-border' : 'calendar-grid-line';
             $elements[] = sprintf(
-                '<line x1="%.1f" y1="%d" x2="%.1f" y2="%.1f"/>',
-                $x,
+                '<rect class="%s" x="%.1f" y="%d" width="%d" height="%.1f" fill="#000000"/>',
+                $class,
+                $x - ($thickness / 2),
                 $gridTop,
-                $x,
-                $gridBottom,
+                $thickness,
+                $gridBottom - $gridTop,
             );
         }
         for ($row = 0; $row <= 6; $row++) {
             $y = $gridTop + ($row * $rowHeight);
+            $thickness = in_array($row, [0, 6], true) ? 5 : 3;
+            $class = $thickness === 5 ? 'calendar-grid-border' : 'calendar-grid-line';
             $elements[] = sprintf(
-                '<line x1="%d" y1="%.1f" x2="%d" y2="%.1f"/>',
+                '<rect class="%s" x="%d" y="%.1f" width="%.1f" height="%d" fill="#000000"/>',
+                $class,
                 $horizontalMargin,
-                $y,
-                $canvasWidth - $horizontalMargin,
-                $y,
+                $y - ($thickness / 2),
+                $gridWidth,
+                $thickness,
             );
         }
 
@@ -99,18 +105,18 @@ class CalendarLayoutService
 
         $textElements = array_filter(
             $elements,
-            static fn(string $element): bool => !str_starts_with($element, '<line'),
+            static fn(string $element): bool => !str_starts_with($element, '<rect class="calendar-grid'),
         );
         $lineElements = array_filter(
             $elements,
-            static fn(string $element): bool => str_starts_with($element, '<line'),
+            static fn(string $element): bool => str_starts_with($element, '<rect class="calendar-grid'),
         );
 
         return sprintf(
             '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d">'
             . '<rect width="100%%" height="100%%" fill="white"/>'
             . '<g fill="black" stroke="none" font-family="Noto Sans CJK JP">%s</g>'
-            . '<g fill="none" stroke="black" stroke-width="1">%s</g></svg>',
+            . '<g shape-rendering="crispEdges">%s</g></svg>',
             $canvasWidth,
             $canvasHeight,
             $canvasWidth,
