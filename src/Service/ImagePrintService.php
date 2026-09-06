@@ -36,6 +36,6 @@ class ImagePrintService
         );
 
         return "\x1b\x40\x1b\x33\x00\x1b\x61\x01" . $rendered['escpos']
-            . "\x1b\x64\x03\x1d\x56\x00";
+            . "\x1b\x64\x08\x1d\x56\x00";
     }
 }

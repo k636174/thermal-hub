@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 class ImagePrintServiceTest extends TestCase
 {
-    public function testPayloadFeedsThreeLinesBeforeCutting(): void
+    public function testPayloadFeedsEightLinesBeforeCutting(): void
     {
         if (!class_exists('Imagick')) {
             $this->markTestSkipped('Imagick is not installed.');
@@ -23,6 +23,6 @@ class ImagePrintServiceTest extends TestCase
             'dpi' => 203,
         ]);
 
-        $this->assertStringEndsWith("\x1b\x64\x03\x1d\x56\x00", $payload);
+        $this->assertStringEndsWith("\x1b\x64\x08\x1d\x56\x00", $payload);
     }
 }
