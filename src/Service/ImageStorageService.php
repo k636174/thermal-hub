@@ -28,7 +28,13 @@ class ImageStorageService
     public function store(UploadedFileInterface $upload): array
     {
         if ($upload->getError() !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('画像のアップロードに失敗しました。');
+            $message = match ($upload->getError()) {
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => '画像は10MB以下にしてください。',
+                UPLOAD_ERR_PARTIAL => '画像のアップロードが途中で中断されました。',
+                UPLOAD_ERR_NO_FILE => '画像を選択してください。',
+                default => '画像のアップロードに失敗しました。',
+            };
+            throw new RuntimeException($message);
         }
         $size = $upload->getSize();
         if ($size === null || $size < 1 || $size > self::MAX_FILE_SIZE) {

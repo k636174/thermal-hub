@@ -61,4 +61,13 @@ class ImageStorageServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
         (new ImageStorageService($this->directory))->store($upload);
     }
+
+    public function testReportsConfiguredSizeLimitForPhpUploadRejection(): void
+    {
+        $upload = new UploadedFile('ignored', 0, UPLOAD_ERR_INI_SIZE, 'large.png', 'image/png');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('画像は10MB以下にしてください。');
+        (new ImageStorageService($this->directory))->store($upload);
+    }
 }
