@@ -12,7 +12,6 @@ class CalendarLayoutServiceTest extends TestCase
     public function testRenderSvgBuildsHorizontalSixWeekCalendar(): void
     {
         $svg = (new CalendarLayoutService())->renderSvg(2026, 9, 203, 576);
-
         $this->assertStringContainsString('width="1359" height="576"', $svg);
         $this->assertStringContainsString('2026年9月', $svg);
         $this->assertStringContainsString('data-date="2026-08-30"', $svg);

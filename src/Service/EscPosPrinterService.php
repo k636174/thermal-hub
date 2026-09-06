@@ -68,6 +68,56 @@ class EscPosPrinterService
             . "\n\x1b\x64\x03\x1d\x56\x00";
     }
 
+    /**
+     * Build a payload from trusted style flags without parsing control markup in user text.
+     *
+     * @param list<array{text: string, reversed: bool, feedDots?: int}> $segments
+     */
+    public function buildSegmentedPayload(
+        array $segments,
+        string $encoding,
+        ?int $lineSpacingDots = null,
+        int $extraFeedDots = 0,
+        int $finalFeedLines = 3,
+    ): string {
+        if (
+            ($lineSpacingDots !== null && ($lineSpacingDots < 0 || $lineSpacingDots > 255))
+            || $extraFeedDots < 0 || $extraFeedDots > 255
+            || $finalFeedLines < 0 || $finalFeedLines > 255
+        ) {
+            throw new RuntimeException('行間隔または紙送り量の指定が不正です。');
+        }
+        $textPrefix = '';
+        $textSuffix = '';
+        if (in_array(strtoupper($encoding), ['CP932', 'SHIFT_JIS'], true)) {
+            $textPrefix = "\x1c\x43\x01\x1c\x26";
+            $textSuffix = "\x1c\x2e";
+        }
+
+        $formatted = '';
+        foreach ($segments as $segment) {
+            $text = str_replace(["\r\n", "\r"], "\n", $segment['text']);
+            $converted = $this->convert($text, $encoding);
+            $formatted .= $segment['reversed']
+                ? "\x1d\x42\x01" . $converted . "\x1d\x42\x00"
+                : $converted;
+            $feedDots = $segment['feedDots'] ?? 0;
+            if ($feedDots < 0 || $feedDots > 255) {
+                throw new RuntimeException('セグメントの紙送り量が不正です。');
+            }
+            if ($feedDots > 0) {
+                $formatted .= "\x1b\x4a" . chr($feedDots);
+            }
+        }
+
+        $lineSpacing = $lineSpacingDots === null ? '' : "\x1b\x33" . chr($lineSpacingDots);
+        $extraFeed = $extraFeedDots > 0 ? "\x1b\x4a" . chr($extraFeedDots) : '';
+        $finalFeed = $finalFeedLines > 0 ? "\n\x1b\x64" . chr($finalFeedLines) : '';
+
+        return "\x1b\x40" . $lineSpacing . $textPrefix . $formatted . $textSuffix
+            . $finalFeed . $extraFeed . "\x1d\x56\x00";
+    }
+
     /** Convert UTF-8 text to the printer encoding. */
     private function convert(string $body, string $encoding): string
     {

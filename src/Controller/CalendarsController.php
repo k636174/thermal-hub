@@ -28,12 +28,10 @@ class CalendarsController extends AppController
             FILTER_VALIDATE_INT,
             ['options' => ['min_range' => 1, 'max_range' => 12]],
         );
-
         if ($year === false || $month === false) {
             $year = (int)$today->format('Y');
             $month = (int)$today->format('n');
         }
-
         $monthStart = new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month));
         $calendarStart = $monthStart->modify('-' . $monthStart->format('w') . ' days');
         $days = [];
@@ -45,18 +43,14 @@ class CalendarsController extends AppController
                 'isToday' => $date->format('Y-m-d') === $today->format('Y-m-d'),
             ];
         }
-
         $uid = $this->currentUserId();
         $printers = $this->fetchTable('Printers')->find('list')
             ->where(['user_id' => $uid, 'raster_enabled' => true])->toArray();
         $lastPrint = $this->fetchTable('PrintLogs')->find()
             ->select(['printer_id'])
             ->where(['user_id' => $uid, 'document_type' => 'calendar'])
-            ->orderBy(['printed_at' => 'DESC', 'id' => 'DESC'])
-            ->first();
+            ->orderBy(['printed_at' => 'DESC', 'id' => 'DESC'])->first();
         $lastPrinterId = (int)($lastPrint?->get('printer_id') ?? 0);
-        $selectedPrinterId = array_key_exists($lastPrinterId, $printers) ? $lastPrinterId : null;
-
         $this->set([
             'year' => $year,
             'month' => $month,
@@ -64,7 +58,7 @@ class CalendarsController extends AppController
             'previousMonth' => $monthStart->modify('-1 month'),
             'nextMonth' => $monthStart->modify('+1 month'),
             'printers' => $printers,
-            'selectedPrinterId' => $selectedPrinterId,
+            'selectedPrinterId' => array_key_exists($lastPrinterId, $printers) ? $lastPrinterId : null,
         ]);
     }
 
@@ -77,7 +71,6 @@ class CalendarsController extends AppController
         if ($year === false || $year < 1900 || $year > 2100 || $month === false || $month < 1 || $month > 12) {
             throw new BadRequestException('年月の指定が不正です。');
         }
-
         $uid = $this->currentUserId();
         $printerId = (int)$this->getRequest()->getData('printer_id');
         $printer = $this->fetchTable('Printers')->find()
@@ -85,7 +78,6 @@ class CalendarsController extends AppController
         if (!$printer) {
             throw new NotFoundException();
         }
-
         $status = 'success';
         $message = sprintf('%d年%d月のカレンダーを送信しました。', $year, $month);
         try {

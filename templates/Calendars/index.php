@@ -19,57 +19,54 @@ $printerRegistrationLink = $this->Html->link(
 ?>
 <div class="calendar-page">
     <div class="calendar-toolbar no-print">
-        <div>
-            <p class="calendar-eyebrow">MONTHLY PLANNER</p>
-            <h1>カレンダー</h1>
-        </div>
+        <div><p class="calendar-eyebrow">MONTHLY PLANNER</p><h1>カレンダー</h1></div>
     </div>
-
     <div class="calendar-controls no-print">
         <?= $this->Form->create(null, ['type' => 'get', 'class' => 'calendar-date-form']) ?>
         <?= $this->Form->control('year', [
-            'type' => 'number',
-            'label' => '年',
-            'value' => $year,
-            'min' => 1900,
-            'max' => 2100,
-            'required' => true,
+            'type' => 'number', 'label' => '年', 'value' => $year,
+            'min' => 1900, 'max' => 2100, 'required' => true,
         ]) ?>
         <?= $this->Form->control('month', [
-            'type' => 'select',
-            'label' => '月',
-            'value' => $month,
-            'options' => array_combine(range(1, 12), array_map(fn(int $value): string => $value . '月', range(1, 12))),
+            'type' => 'select', 'label' => '月', 'value' => $month,
+            'options' => array_combine(
+                range(1, 12),
+                array_map(fn(int $value): string => $value . '月', range(1, 12)),
+            ),
         ]) ?>
         <?= $this->Form->button('表示する') ?>
         <?= $this->Form->end() ?>
         <div class="calendar-shortcuts">
             <?= $this->Html->link('‹ 前月', [
-                'year' => $previousMonth->format('Y'),
-                'month' => $previousMonth->format('n'),
+                'controller' => 'Calendars',
+                'action' => 'index',
+                '?' => [
+                    'year' => $previousMonth->format('Y'),
+                    'month' => $previousMonth->format('n'),
+                ],
             ], ['class' => 'button button-outline']) ?>
-            <?= $this->Html->link('今月', ['action' => 'index'], ['class' => 'button button-outline']) ?>
+            <?= $this->Html->link('今月', [
+                'controller' => 'Calendars',
+                'action' => 'index',
+            ], ['class' => 'button button-outline']) ?>
             <?= $this->Html->link('翌月 ›', [
-                'year' => $nextMonth->format('Y'),
-                'month' => $nextMonth->format('n'),
+                'controller' => 'Calendars',
+                'action' => 'index',
+                '?' => [
+                    'year' => $nextMonth->format('Y'),
+                    'month' => $nextMonth->format('n'),
+                ],
             ], ['class' => 'button button-outline']) ?>
         </div>
     </div>
-
     <div class="calendar-printer-panel">
         <?php if ($printers) : ?>
-            <?= $this->Form->create(null, [
-                'url' => ['action' => 'printNow'],
-                'class' => 'calendar-print-form',
-            ]) ?>
+            <?= $this->Form->create(null, ['url' => ['action' => 'printNow'], 'class' => 'calendar-print-form']) ?>
             <?= $this->Form->hidden('year', ['value' => $year]) ?>
             <?= $this->Form->hidden('month', ['value' => $month]) ?>
             <?= $this->Form->control('printer_id', [
-                'type' => 'select',
-                'label' => '印字先プリンター',
-                'options' => $printers,
-                'value' => $selectedPrinterId,
-                'required' => true,
+                'type' => 'select', 'label' => '印字先プリンター', 'options' => $printers,
+                'value' => $selectedPrinterId, 'required' => true,
             ]) ?>
             <?= $this->Form->button('サーマルプリンターで印字', [
                 'confirm' => $year . '年' . $month . '月のカレンダーを印字しますか？',
@@ -80,7 +77,6 @@ $printerRegistrationLink = $this->Html->link(
             <p>印字するには画像印字が有効な<?= $printerRegistrationLink ?>してください。</p>
         <?php endif; ?>
     </div>
-
     <section class="calendar-sheet" aria-label="<?= h($year . '年' . $month . '月のカレンダー') ?>">
         <header class="calendar-heading">
             <p><?= h((string)$year) ?></p>

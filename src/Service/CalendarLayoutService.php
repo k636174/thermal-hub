@@ -11,12 +11,8 @@ class CalendarLayoutService
     public const NARROW_LENGTH_MM = 170.0;
 
     /** Render a horizontal six-week monthly calendar as SVG. */
-    public function renderSvg(
-        int $year,
-        int $month,
-        int $dpi,
-        int $printableWidthDots,
-    ): string {
+    public function renderSvg(int $year, int $month, int $dpi, int $printableWidthDots): string
+    {
         $this->validate($year, $month, $dpi, $printableWidthDots);
         $canvasWidth = $this->mmToDots(self::NARROW_LENGTH_MM, $dpi);
         $canvasHeight = $printableWidthDots;
@@ -33,17 +29,14 @@ class CalendarLayoutService
         $titleSize = max(18, (int)round($headerHeight * 0.48));
         $weekdaySize = max(11, (int)round($weekdayHeight * 0.48));
         $daySize = max(11, (int)round(min($columnWidth, $rowHeight) * 0.24));
-
-        $elements = [
-            sprintf(
-                '<text x="%d" y="%d" font-size="%d" font-weight="bold">%d年%d月</text>',
-                $leftMargin,
-                $verticalMargin + (int)round($headerHeight * 0.68),
-                $titleSize,
-                $year,
-                $month,
-            ),
-        ];
+        $elements = [sprintf(
+            '<text x="%d" y="%d" font-size="%d" font-weight="bold">%d年%d月</text>',
+            $leftMargin,
+            $verticalMargin + (int)round($headerHeight * 0.68),
+            $titleSize,
+            $year,
+            $month,
+        )];
         $weekdays = ['日', '月', '火', '水', '木', '金', '土'];
         foreach ($weekdays as $column => $weekday) {
             $x = $leftMargin + (($column + 0.5) * $columnWidth);
@@ -56,7 +49,6 @@ class CalendarLayoutService
                 $weekday,
             );
         }
-
         for ($column = 0; $column <= 7; $column++) {
             $x = $leftMargin + ($column * $columnWidth);
             $thickness = in_array($column, [0, 7], true) ? 5 : 3;
@@ -83,7 +75,6 @@ class CalendarLayoutService
                 $thickness,
             );
         }
-
         $monthStart = new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month));
         $calendarStart = $monthStart->modify('-' . $monthStart->format('w') . ' days');
         for ($index = 0; $index < 42; $index++) {
@@ -103,7 +94,6 @@ class CalendarLayoutService
                 $date->format('j'),
             );
         }
-
         $textElements = array_filter(
             $elements,
             static fn(string $element): bool => !str_starts_with($element, '<rect class="calendar-grid'),

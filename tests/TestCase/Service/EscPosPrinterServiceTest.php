@@ -41,6 +41,17 @@ class EscPosPrinterServiceTest extends TestCase
         $this->assertStringNotContainsString('!!', $payload);
     }
 
+    public function testBuildSegmentedPayloadDoesNotParseMarkupInPlainSegment(): void
+    {
+        $payload = (new EscPosPrinterService())->buildSegmentedPayload([
+            ['text' => '9/7 (月)', 'reversed' => true],
+            ['text' => "\n!!予定!!\n", 'reversed' => false],
+        ], 'UTF-8');
+
+        $this->assertStringContainsString("\x1d\x42\x019/7 (月)\x1d\x42\x00", $payload);
+        $this->assertStringContainsString('!!予定!!', $payload);
+    }
+
     public function testBuildPayloadConvertsQrMarkerToEscPosQrCommands(): void
     {
         $payload = (new EscPosPrinterService())->buildPayload('[[QR:https://example.com]]', 'UTF-8');
