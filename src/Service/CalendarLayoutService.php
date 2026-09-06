@@ -20,13 +20,14 @@ class CalendarLayoutService
         $this->validate($year, $month, $dpi, $printableWidthDots);
         $canvasWidth = $this->mmToDots(self::NARROW_LENGTH_MM, $dpi);
         $canvasHeight = $printableWidthDots;
-        $horizontalMargin = $this->mmToDots(5.0, $dpi);
+        $leftMargin = $this->mmToDots(5.0, $dpi);
+        $cutMargin = $this->mmToDots(20.0, $dpi);
         $verticalMargin = $this->mmToDots(2.0, $dpi);
         $headerHeight = max(42, (int)round($canvasHeight * 0.12));
         $weekdayHeight = max(25, (int)round($canvasHeight * 0.07));
         $gridTop = $verticalMargin + $headerHeight + $weekdayHeight;
         $gridBottom = $canvasHeight - $verticalMargin;
-        $gridWidth = $canvasWidth - ($horizontalMargin * 2);
+        $gridWidth = $canvasWidth - $leftMargin - $cutMargin;
         $columnWidth = $gridWidth / 7;
         $rowHeight = ($gridBottom - $gridTop) / 6;
         $titleSize = max(18, (int)round($headerHeight * 0.48));
@@ -36,7 +37,7 @@ class CalendarLayoutService
         $elements = [
             sprintf(
                 '<text x="%d" y="%d" font-size="%d" font-weight="bold">%d年%d月</text>',
-                $horizontalMargin,
+                $leftMargin,
                 $verticalMargin + (int)round($headerHeight * 0.68),
                 $titleSize,
                 $year,
@@ -45,7 +46,7 @@ class CalendarLayoutService
         ];
         $weekdays = ['日', '月', '火', '水', '木', '金', '土'];
         foreach ($weekdays as $column => $weekday) {
-            $x = $horizontalMargin + (($column + 0.5) * $columnWidth);
+            $x = $leftMargin + (($column + 0.5) * $columnWidth);
             $y = $verticalMargin + $headerHeight + (int)round($weekdayHeight * 0.68);
             $elements[] = sprintf(
                 '<text x="%.1f" y="%d" font-size="%d" text-anchor="middle" font-weight="bold">%s</text>',
@@ -57,7 +58,7 @@ class CalendarLayoutService
         }
 
         for ($column = 0; $column <= 7; $column++) {
-            $x = $horizontalMargin + ($column * $columnWidth);
+            $x = $leftMargin + ($column * $columnWidth);
             $thickness = in_array($column, [0, 7], true) ? 5 : 3;
             $class = $thickness === 5 ? 'calendar-grid-border' : 'calendar-grid-line';
             $elements[] = sprintf(
@@ -76,7 +77,7 @@ class CalendarLayoutService
             $elements[] = sprintf(
                 '<rect class="%s" x="%d" y="%.1f" width="%.1f" height="%d" fill="#000000"/>',
                 $class,
-                $horizontalMargin,
+                $leftMargin,
                 $y - ($thickness / 2),
                 $gridWidth,
                 $thickness,
@@ -89,7 +90,7 @@ class CalendarLayoutService
             $date = $calendarStart->modify('+' . $index . ' days');
             $column = $index % 7;
             $row = intdiv($index, 7);
-            $x = $horizontalMargin + ($column * $columnWidth) + max(4, $columnWidth * 0.08);
+            $x = $leftMargin + ($column * $columnWidth) + max(4, $columnWidth * 0.08);
             $y = $gridTop + ($row * $rowHeight) + $daySize + max(2, $rowHeight * 0.05);
             $outsideMonth = $date->format('Y-m') !== $monthStart->format('Y-m');
             $elements[] = sprintf(

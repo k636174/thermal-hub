@@ -22,6 +22,7 @@ class CalendarLayoutServiceTest extends TestCase
         $this->assertStringContainsString('width="3"', $svg);
         $this->assertStringContainsString('width="5"', $svg);
         $this->assertStringContainsString('fill="#000000"', $svg);
+        $this->assertStringContainsString('x="1196.5"', $svg);
         $this->assertSame(42, substr_count($svg, 'data-date='));
     }
 
