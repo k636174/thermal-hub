@@ -19,14 +19,15 @@ class WeeklySchedulePrintServiceTest extends TestCase
         );
 
         $this->assertStringNotContainsString('2026年9月7日 - 9月13日', $payload);
-        $this->assertStringContainsString("2026/09/07 (Mon) ---------------------------\n　　朝会", $payload);
+        $this->assertStringContainsString("2026/09/07 (Mon) ---------------------------\n　｜朝会", $payload);
         $this->assertStringContainsString('2026/09/13 (Sun)', $payload);
         $this->assertStringContainsString("\x1d\x42\x01　2026/09/12 (Sat)　\x1d\x42\x00", $payload);
         $this->assertSame(7, substr_count($payload, ' ---------------------------'));
         $this->assertSame(2, substr_count($payload, "\x1d\x42\x01"));
         $this->assertStringStartsWith("\x1b\x40\x1b\x33\x18", $payload);
         $this->assertStringEndsWith("\x1b\x4a\xa2\x1d\x56\x00", $payload);
-        $this->assertSame(94, substr_count($payload, '　'));
+        $this->assertSame(49, substr_count($payload, '　'));
+        $this->assertSame(45, substr_count($payload, '｜'));
         $this->assertPaperTravelIncludesThreeCalibrationLines($payload);
     }
 
@@ -40,7 +41,7 @@ class WeeklySchedulePrintServiceTest extends TestCase
         );
 
         $this->assertStringNotContainsString('!!', $payload);
-        $this->assertStringContainsString("　　\x1d\x42\x01重要\x1d\x42\x00\n", $payload);
+        $this->assertStringContainsString("　｜\x1d\x42\x01重要\x1d\x42\x00\n", $payload);
         $this->assertSame(1, substr_count($payload, "\x1d\x42\x01"));
     }
 
@@ -81,7 +82,7 @@ class WeeklySchedulePrintServiceTest extends TestCase
             'UTF-8',
         );
 
-        $this->assertStringContainsString("　　日曜の予定\n　　\n　　\n　　\n　　\n　　\n\x1b\x4a\x03", $payload);
+        $this->assertStringContainsString("　｜日曜の予定\n　｜\n　｜\n　｜\n　｜\n　｜\n\x1b\x4a\x03", $payload);
         $this->assertStringEndsWith("\x1b\x4a\xa2\x1d\x56\x00", $payload);
         $this->assertPaperTravelIncludesThreeCalibrationLines($payload);
     }

@@ -13,7 +13,7 @@ class WeeklySchedulePrintService
     private const NOTE_TEXT_COLUMNS = 44;
     private const LINE_SPACING_DOTS = 24;
     private const DAY_SEPARATOR = ' ---------------------------';
-    private const NOTE_INDENT = '　　';
+    private const NOTE_INDENT = '　｜';
     private const REVERSE_PADDING = '　';
     private const TRAILING_CALIBRATION_LINES = 3;
 
