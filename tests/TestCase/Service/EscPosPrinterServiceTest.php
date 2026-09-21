@@ -56,10 +56,17 @@ class EscPosPrinterServiceTest extends TestCase
     {
         $payload = (new EscPosPrinterService())->buildPayload('[[QR:https://example.com]]', 'UTF-8');
 
-        $this->assertStringContainsString("\x1d\x28\x6b\x04\x00\x31\x41\x32\x00", $payload);
+        $this->assertStringContainsString("\x1b\x61\x01\x1d\x28\x6b\x04\x00\x31\x41\x32\x00", $payload);
         $this->assertStringContainsString("\x1d\x28\x6b\x03\x00\x31\x43\x06", $payload);
         $this->assertStringContainsString('https://example.com', $payload);
-        $this->assertStringEndsWith("\x1d\x28\x6b\x03\x00\x31\x51\x30\n\x1b\x64\x03\x1d\x56\x00", $payload);
+        $this->assertStringEndsWith("\x1d\x28\x6b\x03\x00\x31\x51\x30\x1b\x61\x00\n\x1b\x64\x03\x1d\x56\x00", $payload);
         $this->assertStringNotContainsString('[[QR:', $payload);
+    }
+
+    public function testBuildPayloadRestoresLeftAlignmentAfterQrCode(): void
+    {
+        $payload = (new EscPosPrinterService())->buildPayload('[[QR:data]]after', 'UTF-8');
+
+        $this->assertStringContainsString("\x1d\x28\x6b\x03\x00\x31\x51\x30\x1b\x61\x00after", $payload);
     }
 }
