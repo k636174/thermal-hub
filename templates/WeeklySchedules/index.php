@@ -67,8 +67,8 @@ $printerRegistrationLink = $this->Html->link('プリンターを登録', ['contr
                     <div class="schedule-note">
                         <label for="note-<?= $index ?>">予定</label>
                         <textarea
-                            id="note-<?= $index ?>" name="notes[<?= $index ?>]" maxlength="120"
-                            rows="6" placeholder="予定を入力（120文字・6行まで、!!文字!!で反転）"
+                            id="note-<?= $index ?>" name="notes[<?= $index ?>]"
+                            rows="6" placeholder="予定を入力（週42行まで、!!文字!!で反転）"
                         ><?= h($day['note']) ?></textarea>
                     </div>
                     <label class="invert-toggle">

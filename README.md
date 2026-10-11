@@ -162,6 +162,37 @@ bin/cake user reset-password user@example.com
 3. 「印字データ」でタイトルと本文を保存する。
 4. 印字データ一覧からプリンターを選んで印字する。
 
+## Todo API
+
+Todo APIの固定Bearerトークンは、ログイン後にナビゲーションの「API設定」から発行します。空欄のまま発行すると安全な64文字のトークンを自動生成します。任意の値を使う場合は32文字以上を入力してください。
+
+トークンの平文は発行直後に一度だけ表示されます。DBにはHMACだけが保存され、APIが操作するTodoはトークンを発行したユーザーのデータに限定されます。
+
+エンドポイントは次の通りです。
+
+- `GET /api/todos`
+- `GET /api/todos/{id}`
+- `POST /api/todos`
+- `PATCH /api/todos/{id}` または `PUT /api/todos/{id}`
+- `DELETE /api/todos/{id}`
+
+作成例：
+
+```bash
+curl -X POST https://example.com/api/todos \
+  -H "Authorization: Bearer 発行したトークン" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "title": "牛乳を買う",
+    "description": "低脂肪乳を2本買う",
+    "status": "pending",
+    "priority": "high",
+    "due_date": "2026-09-30T19:00:00Z"
+  }'
+```
+
+`status` は `pending`、`in_progress`、`completed`、`priority` は `low`、`medium`、`high` を指定できます。日時はUTCのISO 8601形式で返されます。
+
 ## 宛先ラベル
 
 1. プリンター設定で画像印字を有効にし、実機の印字可能幅、用紙幅、ラベル長を登録する。

@@ -4,12 +4,14 @@ declare(strict_types=1);
 namespace App\Service;
 
 use DateTimeImmutable;
+use RuntimeException;
 
 class WeeklySchedulePrintService
 {
     private const CONTENT_LENGTH_MM = 150.0;
     private const CUT_MARGIN_MM = 20.0;
     private const NOTE_LINES_PER_DAY = 6;
+    private const TOTAL_NOTE_LINES = self::NOTE_LINES_PER_DAY * 7;
     private const NOTE_TEXT_COLUMNS = 44;
     private const LINE_SPACING_DOTS = 24;
     private const DAY_SEPARATOR = ' ---------------------------';
@@ -59,6 +61,7 @@ class WeeklySchedulePrintService
         $contentDots = (int)round(self::CONTENT_LENGTH_MM * $dpi / 25.4);
         $cutMarginDots = (int)round(self::CUT_MARGIN_MM * $dpi / 25.4);
         $dayHeightDots = intdiv($contentDots, 7);
+        $noteLineAllocations = $this->allocateNoteLines($notes);
         for ($index = 0; $index < 7; $index++) {
             $date = $weekStart->modify('+' . $index . ' days');
             $isInverted = isset($inverted[$index]);
@@ -73,7 +76,10 @@ class WeeklySchedulePrintService
                 'text' => self::DAY_SEPARATOR,
                 'reversed' => false,
             ];
-            $noteSegments = $this->noteSegments($notes[$index] ?? '');
+            $noteSegments = $this->noteSegments(
+                $notes[$index] ?? '',
+                $noteLineAllocations[$index],
+            );
             $segments[] = ['text' => "\n", 'reversed' => false];
             array_push($segments, ...$noteSegments);
             $lastSegment = array_key_last($segments);
@@ -95,12 +101,75 @@ class WeeklySchedulePrintService
         );
     }
 
+    /** @param array<int, string> $notes */
+    public function notesFit(array $notes): bool
+    {
+        $requiredLines = 0;
+        for ($index = 0; $index < 7; $index++) {
+            $requiredLines += count($this->noteLines($notes[$index] ?? ''));
+        }
+
+        return $requiredLines <= self::TOTAL_NOTE_LINES;
+    }
+
+    /**
+     * Move unused lines from the nearest days to days whose notes exceed six lines.
+     *
+     * @param array<int, string> $notes
+     * @return array<int, int>
+     */
+    private function allocateNoteLines(array $notes): array
+    {
+        $required = [];
+        for ($index = 0; $index < 7; $index++) {
+            $required[$index] = count($this->noteLines($notes[$index] ?? ''));
+        }
+        if (array_sum($required) > self::TOTAL_NOTE_LINES) {
+            throw new RuntimeException('予定は週全体で42行以内にしてください。');
+        }
+
+        $allocated = array_fill(0, 7, self::NOTE_LINES_PER_DAY);
+        for ($index = 0; $index < 7; $index++) {
+            $needed = $required[$index] - $allocated[$index];
+            for ($distance = 1; $needed > 0 && $distance < 7; $distance++) {
+                foreach ([$index - $distance, $index + $distance] as $donor) {
+                    if ($donor < 0 || $donor > 6) {
+                        continue;
+                    }
+                    $available = $allocated[$donor] - $required[$donor];
+                    $moved = min($needed, max(0, $available));
+                    $allocated[$donor] -= $moved;
+                    $allocated[$index] += $moved;
+                    $needed -= $moved;
+                }
+            }
+        }
+
+        return $allocated;
+    }
+
     /**
      * Build fixed-height note segments, interpreting !!text!! as reverse-print markup.
      *
      * @return list<array{text: string, reversed: bool}>
      */
-    private function noteSegments(string $note): array
+    private function noteSegments(string $note, int $lineCount): array
+    {
+        $lines = array_pad($this->noteLines($note), $lineCount, []);
+        $segments = [];
+        foreach ($lines as $line) {
+            $this->appendSegment($segments, self::NOTE_INDENT, false);
+            foreach ($line as $character) {
+                $this->appendSegment($segments, $character['text'], $character['reversed']);
+            }
+            $this->appendSegment($segments, "\n", false);
+        }
+
+        return $segments;
+    }
+
+    /** @return list<list<array{text: string, reversed: bool}>> */
+    private function noteLines(string $note): array
     {
         $parts = preg_split('/(!!.+?!!)/su', $note, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$note];
         $lines = [[]];
@@ -125,17 +194,7 @@ class WeeklySchedulePrintService
             }
         }
 
-        $lines = array_slice(array_pad($lines, self::NOTE_LINES_PER_DAY, []), 0, self::NOTE_LINES_PER_DAY);
-        $segments = [];
-        foreach ($lines as $line) {
-            $this->appendSegment($segments, self::NOTE_INDENT, false);
-            foreach ($line as $character) {
-                $this->appendSegment($segments, $character['text'], $character['reversed']);
-            }
-            $this->appendSegment($segments, "\n", false);
-        }
-
-        return $segments;
+        return $lines;
     }
 
     /** @param list<array{text: string, reversed: bool}> $segments */

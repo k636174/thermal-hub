@@ -158,11 +158,10 @@ class WeeklySchedulesController extends AppController
         $rawNotes = $this->getRequest()->getData('notes');
         $notes = [];
         for ($index = 0; $index < 7; $index++) {
-            $note = is_array($rawNotes) ? (string)($rawNotes[$index] ?? '') : '';
-            if (mb_strlen($note) > 120 || count(preg_split('/\R/u', $note) ?: []) > 6) {
-                throw new BadRequestException('予定は1日あたり120文字・6行以内で入力してください。');
-            }
-            $notes[$index] = $note;
+            $notes[$index] = is_array($rawNotes) ? (string)($rawNotes[$index] ?? '') : '';
+        }
+        if (!(new WeeklySchedulePrintService())->notesFit($notes)) {
+            throw new BadRequestException('予定は空行を含め、週全体で42行以内にしてください。');
         }
         $rawInverted = $this->getRequest()->getData('inverted');
         $invertedDays = [];

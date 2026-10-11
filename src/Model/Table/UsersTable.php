@@ -20,6 +20,9 @@ class UsersTable extends Table
         $this->hasMany('PrintJobs');
         $this->hasMany('ImagePrintJobs');
         $this->hasMany('PrintLogs');
+        $this->hasMany('Todos');
+        $this->hasOne('TodoPrintPreferences');
+        $this->hasOne('TodoApiTokens');
     }
 
     /** Configure validation. */

@@ -1,0 +1,40 @@
+.todo-page { color: #23313d; }
+.todo-header { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin-bottom: 2rem; }
+.todo-header h1, .todo-header p { margin: 0; }
+.todo-eyebrow { color: #83919d; font-size: 1.1rem; font-weight: 700; letter-spacing: .2em; }
+.todo-add-panel, .todo-printer-panel, .todo-empty { margin-bottom: 2rem; padding: 1.8rem; border-radius: .8rem; background: #fff; box-shadow: 0 5px 18px rgba(35,49,61,.08); }
+.todo-add-panel h2, .todo-printer-panel h2 { margin: 0 0 1.2rem; font-size: 1.8rem; }
+.todo-add-form, .todo-print-controls { display: flex; align-items: end; gap: 1.2rem; }
+.todo-add-form { flex-wrap: wrap; }
+.todo-add-form .input:first-child, .todo-add-form .textarea { flex: 1; }
+.todo-add-form .input, .todo-print-controls .input { margin: 0; }
+.todo-add-form button, .todo-print-controls button { margin-bottom: 0; white-space: nowrap; }
+.todo-list { display: grid; gap: .8rem; margin-bottom: 2rem; }
+.todo-order-note { margin: 0 0 .4rem; color: #71808c; font-size: 1.3rem; }
+.todo-item { display: flex; align-items: center; gap: 1.2rem; min-height: 6.4rem; padding: 1rem 1.4rem; border: 1px solid #d8dfe4; border-radius: .7rem; background: #fff; }
+.todo-item.completed { background: #f5f7f8; color: #7c8992; }
+.todo-item.completed .todo-content strong { text-decoration: line-through; }
+.todo-select { margin: 0; }
+.todo-select input { width: 1.8rem; height: 1.8rem; margin: 0; }
+.todo-content { display: flex; flex: 1; flex-direction: column; }
+.todo-content small { color: #71808c; }
+.todo-description { margin: .3rem 0; color: #52616c; white-space: normal; }
+.todo-meta { display: flex; gap: .6rem; margin: .3rem 0; }
+.todo-status, .todo-priority { padding: .15rem .7rem; border-radius: 1rem; background: #edf1f4; }
+.priority-high { background: #fae7e7; color: #a84449 !important; }
+.priority-low { background: #e8f2f7; color: #397ba1 !important; }
+.status-in_progress { background: #fff2d8; color: #8b6417 !important; }
+.status-completed { background: #e6f2e9; color: #3e7450 !important; }
+.todo-actions { display: flex; gap: .6rem; }
+.todo-actions .button { height: 3.2rem; margin: 0; padding: 0 1rem; line-height: 3rem; }
+.todo-delete { border-color: #b95b60 !important; color: #a84449 !important; }
+.todo-edit-actions { display: flex; gap: 1rem; align-items: center; }
+.todo-printer-panel { border-left: 4px solid #263d50; }
+.todo-print-controls .input { min-width: 22rem; }
+.todo-printer-panel p { margin: 1rem 0 0; color: #606c76; font-size: 1.3rem; }
+@media screen and (max-width: 700px) {
+    .todo-header, .todo-add-form, .todo-print-controls { align-items: stretch; flex-direction: column; }
+    .todo-item { align-items: flex-start; }
+    .todo-actions { flex-direction: column; }
+    .todo-print-controls .input { min-width: 0; }
+}

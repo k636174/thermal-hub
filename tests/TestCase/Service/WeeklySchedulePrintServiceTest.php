@@ -73,6 +73,33 @@ class WeeklySchedulePrintServiceTest extends TestCase
         $this->assertPaperTravelIncludesThreeCalibrationLines($payload);
     }
 
+    public function testBuildPayloadBorrowsUnusedLinesFromAdjacentDay(): void
+    {
+        $note = implode("\n", ['一', '二', '三', '四', '五', '六', '七', '八']);
+        $payload = (new WeeklySchedulePrintService())->buildPayload(
+            new DateTimeImmutable('2026-09-07'),
+            [$note],
+            [],
+            'UTF-8',
+        );
+
+        $this->assertStringContainsString(
+            "　｜七\n　｜八\n\x1b\x4a\x03" .
+            "2026/09/08 (Tue) ---------------------------\n　｜\n　｜\n　｜\n　｜\n\x1b\x4a\x03",
+            $payload,
+        );
+        $this->assertSame(45, substr_count($payload, '｜'));
+        $this->assertPaperTravelIncludesThreeCalibrationLines($payload);
+    }
+
+    public function testNotesFitUsesWrappedLineCountForWholeWeek(): void
+    {
+        $service = new WeeklySchedulePrintService();
+
+        $this->assertTrue($service->notesFit([implode("\n", array_fill(0, 12, '予定'))]));
+        $this->assertFalse($service->notesFit(array_fill(0, 7, implode("\n", array_fill(0, 7, '予定')))));
+    }
+
     public function testSundayNoteIsFollowedByTwentyMillimeterCutMargin(): void
     {
         $payload = (new WeeklySchedulePrintService())->buildPayload(

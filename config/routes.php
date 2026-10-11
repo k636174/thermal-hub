@@ -59,6 +59,8 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/login', ['controller' => 'Users', 'action' => 'login']);
         $builder->connect('/calendars', ['controller' => 'Calendars', 'action' => 'index']);
         $builder->connect('/weekly-schedules', ['controller' => 'WeeklySchedules', 'action' => 'index']);
+        $builder->connect('/todos', ['controller' => 'Todos', 'action' => 'index']);
+        $builder->connect('/todo-api-settings', ['controller' => 'TodoApiSettings', 'action' => 'index']);
 
         /*
          * ...and connect the rest of 'Pages' controller's URLs.
@@ -79,6 +81,19 @@ return function (RouteBuilder $routes): void {
          * See https://book.cakephp.org/5/en/development/routing.html#fallbacks-method for more information
          */
         $builder->fallbacks();
+    });
+
+    $routes->scope('/api', function (RouteBuilder $builder): void {
+        $builder->connect('/todos', ['prefix' => 'Api', 'controller' => 'Todos', 'action' => 'index'])
+            ->setMethods(['GET']);
+        $builder->connect('/todos', ['prefix' => 'Api', 'controller' => 'Todos', 'action' => 'add'])
+            ->setMethods(['POST']);
+        $builder->connect('/todos/{id}', ['prefix' => 'Api', 'controller' => 'Todos', 'action' => 'view'])
+            ->setPatterns(['id' => '\\d+'])->setPass(['id'])->setMethods(['GET']);
+        $builder->connect('/todos/{id}', ['prefix' => 'Api', 'controller' => 'Todos', 'action' => 'edit'])
+            ->setPatterns(['id' => '\\d+'])->setPass(['id'])->setMethods(['PATCH', 'PUT']);
+        $builder->connect('/todos/{id}', ['prefix' => 'Api', 'controller' => 'Todos', 'action' => 'delete'])
+            ->setPatterns(['id' => '\\d+'])->setPass(['id'])->setMethods(['DELETE']);
     });
 
     /*

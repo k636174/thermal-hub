@@ -25,7 +25,7 @@ class WeeklyScheduleEntriesTable extends Table
     {
         return $validator
             ->date('schedule_date')->notEmptyDate('schedule_date')
-            ->allowEmptyString('note')->maxLength('note', 120)
+            ->allowEmptyString('note')
             ->boolean('is_inverted');
     }
 

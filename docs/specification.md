@@ -14,6 +14,7 @@ Thermal Hub は、利用者がネットワーク上の ESC/POS 対応サーマ�
 - 印字結果（成功／失敗、日時、メッセージ）の保存
 - 年月を指定した月間カレンダーのサーマルプリンター印字
 - 週を指定し、日別予定と反転日を編集できる週間スケジュールのサーマルプリンター印字
+- Todoの登録・完了管理とシステム手帳サイズへのサーマルプリンター印字
 
 アカウントの Web 登録、画像印刷、印刷予約、プリンター状態監視、複雑な ESC/POS レイアウト編集は初期リリースの対象外とする。
 
@@ -111,6 +112,29 @@ Thermal Hub は、利用者がネットワーク上の ESC/POS 対応サーマ�
 13. 印字操作時にも送信前の7日分を保存する。保存データの取得・更新はログインユーザーの所有データだけを対象とする。
 14. 予定本文中の `!!文字!!` は、区切り記号を印字せず、囲まれた文字だけを白黒反転して印字する。
 
+### FR-08 Todo管理
+
+1. ログインユーザーはナビゲーションからTodo一覧を開き、件名、任意の期限日を登録できる。件名は必須で500文字以内とする。
+2. Todoは未完了・完了を切り替えられ、個別に削除できる。一覧は未完了を先に、期限の近さと優先度を合算した緊急度順で表示する。期限超過、当日、2日以内、7日以内、30日以内の順で期限を重く評価し、同時に優先度の高・中・低を反映する。同点では期限の早い順、登録順とする。
+3. 取得、更新、削除、印字はログインユーザーが所有するTodoだけを対象とする。
+4. 一覧で印字対象を複数選択し、所有する登録済みプリンターと用紙サイズを指定してESC/POSテキスト印字できる。
+5. 用紙サイズは「システム手帳 ナロ（170mm）」と「M5／マイクロ5（105mm）」から選択する。各Todoはチェック欄、件名、期限日を印字し、本文後に20mmのカット余白を設ける。
+6. 用紙長に収まる印字上限はナロ12件、M5 7件とし、上限を超える送信は受け付けない。件名は1行の印字幅に合わせて省略する。
+7. 印字の成否、送信先、実行日時、結果メッセージを履歴に保存する。成否にかかわらず直前のプリンターと用紙サイズをユーザー単位で次回表示へ引き継ぐ。
+8. Todoは件名に加え、詳細、状態（`pending`、`in_progress`、`completed`）、優先度（`low`、`medium`、`high`）、日時付きの期限を保持できる。Webの追加画面と編集画面でこれらを設定でき、完了切替は状態と完了フラグを同期する。
+9. Todoのカラム追加・型変更後はCakePHPのモデルメタデータキャッシュを破棄し、詳細、状態、優先度、日時付き期限を直後のWebリクエストから保存対象にする。
+10. 期限は任意とする。編集画面は既存の期限を入力欄へ表示し、期限欄が空のままでも他の項目を更新できる。期限の削除は「期限を解除」の明示操作で行う。
+
+### FR-09 Todo API
+
+1. `GET /api/todos`、`GET /api/todos/{id}`、`POST /api/todos`、`PATCH /api/todos/{id}`、`PUT /api/todos/{id}`、`DELETE /api/todos/{id}` でTodoの取得・作成・更新・削除を行える。
+2. APIは `Authorization: Bearer <token>` ヘッダーを必須とし、登録済みトークンとタイミング攻撃に配慮して比較する。未登録または不一致は401 JSONレスポンスとする。
+3. ログインユーザーはWebのAPI設定画面で任意の32文字以上のBearerトークンを登録、または安全なランダムトークンを自動発行できる。トークンは登録・発行直後に一度だけ表示し、DBにはアプリの秘密値を使ったHMACだけを保存する。トークンは同画面から無効化できる。
+4. APIが操作する所有者は認証したトークンの登録ユーザーとし、そのユーザーのTodoだけを取得・更新・削除できる。
+5. JSONのTodoは `id`、`title`、`description`、`status`、`priority`、`created_at`、`due_date` を返す。日時はUTCのISO 8601形式とし、期限未設定は `null` とする。
+6. 作成時は `title` を必須とし、`description` は空文字、`status` は `pending`、`priority` は `medium` を既定値とする。無効な入力は422 JSONレスポンスとする。
+7. APIパスはBearerトークン認証を行うためCSRF検査を除外する。Web画面のCSRF保護は維持する。
+
 ## 4. データモデル
 
 - `users`: id, email, name, password, created, modified
@@ -118,6 +142,9 @@ Thermal Hub は、利用者がネットワーク上の ESC/POS 対応サーマ�
 - `print_jobs`: id, user_id, title, body, paper_guide, last_printer_id, last_paper_guide, created, modified
 - `print_logs`: id, user_id, printer_id, print_job_id, status, message, printed_at, created
 - `weekly_schedule_entries`: id, user_id, schedule_date, note, is_inverted, created, modified
+- `todos`: id, user_id, title, description, status, priority, due_date, is_completed, created, modified
+- `todo_print_preferences`: id, user_id, printer_id, paper_guide, created, modified
+- `todo_api_tokens`: id, user_id, token_hash, token_hint, created, modified
 
 全ての外部キーにインデックスを設ける。ユーザー削除時は関連データを削除する。
 
@@ -147,6 +174,10 @@ Thermal Hub は、利用者がネットワーク上の ESC/POS 対応サーマ�
 - 年月と所有プリンターを指定すると、該当月の横長カレンダーをサーマルプリンターへ印字でき、結果が履歴へ残る。
 - 週、日別予定、反転日と所有プリンターを指定すると、月曜始まりの週間スケジュールをサーマルプリンターへ印字でき、結果が履歴へ残る。
 - 週間スケジュールの予定と反転指定を保存すると、同じユーザーが該当週を再表示したときだけ入力内容が復元される。
+- Todoの登録、完了切替、削除ができ、別ユーザのTodoは参照・変更できない。
+- Web画面でTodoの詳細、状態、優先度を登録・編集でき、APIでも同じ値を取得できる。
+- 印字対象のTodo、所有プリンター、ナロまたはM5を指定すると、システム手帳用のTodoリストを印字でき、結果が履歴に残る。
+- 正しい固定BearerトークンでTodo APIのCRUDを行え、応答が所定のJSON形式になる。トークンなし・不一致は401、別ユーザーのTodo指定は404となる。
 
 ## 7. 仕様変更手順
 
